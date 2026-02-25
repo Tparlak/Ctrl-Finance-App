@@ -1,0 +1,102 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
+import '../models/fixed_expense.dart';
+import '../data/hive_boxes.dart';
+import 'account_provider.dart';
+
+const _uuid = Uuid();
+
+String _monthYearKey(DateTime d) =>
+    '${d.year}-${d.month.toString().padLeft(2, '0')}';
+
+class FixedExpenseNotifier extends StateNotifier<List<FixedExpense>> {
+  final Ref ref;
+
+  FixedExpenseNotifier(this.ref) : super([]) {
+    _autoCloneForCurrentMonth();
+    _refresh();
+  }
+
+  void _refresh() {
+    final now = DateTime.now();
+    final key = _monthYearKey(now);
+    state = HiveBoxes.fixedExpenses.values
+        .where((e) => e.monthYear == key)
+        .toList();
+  }
+
+  /// For every unique title in the box, ensure there is an entry for the
+  /// current month. If not, create a clone (unpaid) from the last available month.
+  Future<void> _autoCloneForCurrentMonth() async {
+    final now = DateTime.now();
+    final currentKey = _monthYearKey(now);
+    final all = HiveBoxes.fixedExpenses.values.toList();
+
+    // Group by title
+    final Map<String, List<FixedExpense>> byTitle = {};
+    for (final e in all) {
+      byTitle.putIfAbsent(e.title, () => []).add(e);
+    }
+
+    for (final entry in byTitle.entries) {
+      final hasCurrentMonth =
+          entry.value.any((e) => e.monthYear == currentKey);
+      if (!hasCurrentMonth && entry.value.isNotEmpty) {
+        // Clone from the most recent one
+        entry.value.sort((a, b) => b.monthYear.compareTo(a.monthYear));
+        final source = entry.value.first;
+        final clone = FixedExpense(
+          id: _uuid.v4(),
+          title: source.title,
+          amount: source.amount,
+          billArrivalDate: DateTime(now.year, now.month, source.billArrivalDate.day),
+          dueDate: DateTime(now.year, now.month, source.dueDate.day),
+          paymentDate: null,
+          isPaid: false,
+          accountId: null,
+          monthYear: currentKey,
+        );
+        await HiveBoxes.fixedExpenses.put(clone.id, clone);
+      }
+    }
+  }
+
+  Future<void> addExpense({
+    required String title,
+    required double amount,
+    required DateTime billArrivalDate,
+    required DateTime dueDate,
+  }) async {
+    final now = DateTime.now();
+    final expense = FixedExpense(
+      id: _uuid.v4(),
+      title: title,
+      amount: amount,
+      billArrivalDate: billArrivalDate,
+      dueDate: dueDate,
+      paymentDate: null,
+      isPaid: false,
+      accountId: null,
+      monthYear: _monthYearKey(now),
+    );
+    await HiveBoxes.fixedExpenses.put(expense.id, expense);
+    _refresh();
+  }
+
+  Future<void> markAsPaid(String expenseId, String accountId) async {
+    final expense = HiveBoxes.fixedExpenses.get(expenseId);
+    if (expense == null) return;
+    expense.isPaid = true;
+    expense.paymentDate = DateTime.now();
+    expense.accountId = accountId;
+    await expense.save();
+
+    // Deduct from account
+    await ref.read(accountProvider.notifier).updateBalance(accountId, -expense.amount);
+    _refresh();
+  }
+}
+
+final fixedExpenseProvider =
+    StateNotifierProvider<FixedExpenseNotifier, List<FixedExpense>>(
+        (ref) => FixedExpenseNotifier(ref));

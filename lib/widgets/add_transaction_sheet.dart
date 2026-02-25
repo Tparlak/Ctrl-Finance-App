@@ -1,0 +1,450 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import '../theme/app_colors.dart';
+import '../providers/account_provider.dart';
+import '../providers/transaction_provider.dart';
+import '../providers/category_provider.dart';
+import '../widgets/glass_card.dart';
+
+void showAddTransactionSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const AddTransactionSheet(),
+  );
+}
+
+class AddTransactionSheet extends ConsumerStatefulWidget {
+  const AddTransactionSheet({super.key});
+
+  @override
+  ConsumerState<AddTransactionSheet> createState() =>
+      _AddTransactionSheetState();
+}
+
+class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final _amountController = TextEditingController();
+  final _descController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
+  String? _fromAccountId;
+  String? _toAccountId;
+  String? _selectedCategoryId;
+
+  // 0=income, 1=expense, 2=transfer
+  int get _tab => _tabController.index;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _amountController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
+
+  String get _actionLabel {
+    switch (_tab) {
+      case 0:
+        return '+ GELİR EKLE';
+      case 1:
+        return '- GİDER EKLE';
+      default:
+        return '⇄ TRANSFER YAP';
+    }
+  }
+
+  Color get _actionColor {
+    switch (_tab) {
+      case 0:
+        return AppColors.green;
+      case 1:
+        return AppColors.red;
+      default:
+        return AppColors.blue;
+    }
+  }
+
+  String get _txType {
+    switch (_tab) {
+      case 0:
+        return 'income';
+      case 1:
+        return 'expense';
+      default:
+        return 'transfer';
+    }
+  }
+
+  Future<void> _submit() async {
+    final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Geçerli bir tutar giriniz.')),
+      );
+      return;
+    }
+    if (_fromAccountId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Hesap seçiniz.')),
+      );
+      return;
+    }
+    if (_tab == 2 && _toAccountId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Hedef hesap seçiniz.')),
+      );
+      return;
+    }
+
+    await ref.read(transactionProvider.notifier).addTransaction(
+          amount: amount,
+          type: _txType,
+          fromAccountId: _fromAccountId!,
+          toAccountId: _toAccountId,
+          categoryId: _selectedCategoryId,
+          description: _descController.text.trim(),
+          date: _selectedDate,
+        );
+
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accounts = ref.watch(accountProvider);
+    final categories = ref.watch(categoryProvider);
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      color: Colors.transparent,
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        builder: (_, scrollCtrl) => GlassCard(
+          borderRadius: 24,
+          blurSigma: 20,
+          backgroundColor: const Color(0xE6121214),
+          padding: EdgeInsets.fromLTRB(20, 8, 20, 20 + bottomPadding),
+          child: ListView(
+            controller: scrollCtrl,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.glassBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                'İŞLEM EKLE',
+                style: GoogleFonts.poppins(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              // Tab bar
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.glassBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.glassBorder),
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  indicator: BoxDecoration(
+                    color: _actionColor.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  labelColor: _actionColor,
+                  unselectedLabelColor: AppColors.textSecondary,
+                  labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  tabs: const [
+                    Tab(text: 'GELİR'),
+                    Tab(text: 'GİDER'),
+                    Tab(text: 'TRANSFER'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Date picker
+              GestureDetector(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _selectedDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030),
+                    builder: (ctx, child) => Theme(
+                      data: Theme.of(ctx).copyWith(
+                        colorScheme: const ColorScheme.dark(
+                          primary: AppColors.gold,
+                          surface: Color(0xFF1A1B22),
+                        ),
+                      ),
+                      child: child!,
+                    ),
+                  );
+                  if (picked != null) setState(() => _selectedDate = picked);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.glassBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.glassBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today_outlined,
+                          color: AppColors.gold, size: 18),
+                      const SizedBox(width: 12),
+                      Text(
+                        DateFormat('dd MMMM yyyy', 'tr_TR')
+                            .format(_selectedDate),
+                        style: GoogleFonts.poppins(
+                            color: AppColors.textPrimary, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // From Account
+              _AccountSelector(
+                label: _tab == 2 ? 'Kaynak Hesap' : 'Hesap',
+                accounts: accounts,
+                selectedId: _fromAccountId,
+                excludeId: _toAccountId,
+                onChanged: (id) => setState(() => _fromAccountId = id),
+              ),
+              if (_tab == 2) ...[
+                const SizedBox(height: 12),
+                _AccountSelector(
+                  label: 'Hedef Hesap',
+                  accounts: accounts,
+                  selectedId: _toAccountId,
+                  excludeId: _fromAccountId,
+                  onChanged: (id) => setState(() => _toAccountId = id),
+                ),
+              ],
+              if (_tab != 2) ...[
+                const SizedBox(height: 12),
+                // Category horizontal scroll
+                SizedBox(
+                  height: 70,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: categories.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, i) {
+                      final cat = categories[i];
+                      final selected = _selectedCategoryId == cat.id;
+                      return GestureDetector(
+                        onTap: () => setState(
+                            () => _selectedCategoryId = selected ? null : cat.id),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 64,
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? _actionColor.withValues(alpha: 0.2)
+                                : AppColors.glassBg,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: selected ? _actionColor : AppColors.glassBorder,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                IconData(cat.iconCodePoint,
+                                    fontFamily: 'MaterialIcons'),
+                                color: selected
+                                    ? _actionColor
+                                    : AppColors.textSecondary,
+                                size: 22,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                cat.name,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 9,
+                                  color: selected
+                                      ? _actionColor
+                                      : AppColors.textSecondary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              // Description
+              TextField(
+                controller: _descController,
+                style: GoogleFonts.poppins(color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  labelText: 'Açıklama (opsiyonel)',
+                  prefixIcon:
+                      Icon(Icons.notes_outlined, color: AppColors.textSecondary),
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Amount
+              TextField(
+                controller: _amountController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                style: GoogleFonts.poppins(
+                  color: _actionColor,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                  labelText: 'TUTAR (₺)',
+                  labelStyle: GoogleFonts.poppins(
+                      color: AppColors.textSecondary, fontSize: 13),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: _actionColor, width: 1.5),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        BorderSide(color: _actionColor.withValues(alpha: 0.4)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: _actionColor, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: _actionColor.withValues(alpha: 0.05),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Action button
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _actionColor,
+                    foregroundColor: AppColors.background,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    _actionLabel,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AccountSelector extends StatelessWidget {
+  final String label;
+  final List accounts;
+  final String? selectedId;
+  final String? excludeId;
+  final ValueChanged<String?> onChanged;
+
+  const _AccountSelector({
+    required this.label,
+    required this.accounts,
+    this.selectedId,
+    this.excludeId,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered =
+        accounts.where((a) => a.id != excludeId).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+              color: AppColors.textSecondary, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: filtered.map<Widget>((a) {
+            final selected = selectedId == a.id;
+            return GestureDetector(
+              onTap: () => onChanged(a.id as String),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                   color: selected
+                      ? AppColors.gold.withValues(alpha: 0.15)
+                      : AppColors.glassBg,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: selected ? AppColors.gold : AppColors.glassBorder,
+                    width: selected ? 1.5 : 1,
+                  ),
+                ),
+                child: Text(
+                  a.name as String,
+                  style: GoogleFonts.poppins(
+                    color: selected ? AppColors.gold : AppColors.textSecondary,
+                    fontWeight:
+                        selected ? FontWeight.w600 : FontWeight.w400,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+}

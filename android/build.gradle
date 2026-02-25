@@ -1,0 +1,21 @@
+// Root build.gradle — kept minimal; plugin declarations moved to settings.gradle
+// in the new declarative Gradle plugin format required by Flutter SDK >= 3.19.
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
