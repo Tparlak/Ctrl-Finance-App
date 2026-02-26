@@ -9,7 +9,7 @@ import '../models/account.dart';
 import '../models/transaction_model.dart';
 import '../widgets/glass_card.dart';
 
-final _currencyFmt = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
+
 
 class AccountsScreen extends ConsumerWidget {
   const AccountsScreen({super.key});
@@ -430,7 +430,7 @@ class _NormalView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  _currencyFmt.format(account.currentBalance),
+                  currencyFmt.format(account.currentBalance),
                   style: GoogleFonts.poppins(
                     color: isPositive ? AppColors.green : AppColors.red,
                     fontSize: 17,
@@ -619,7 +619,7 @@ class AccountDetailScreen extends ConsumerWidget {
                       shaderCallback: (b) =>
                           AppColors.goldGradient.createShader(b),
                       child: Text(
-                        _currencyFmt.format(account.currentBalance),
+                        currencyFmt.format(account.currentBalance),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 32,
@@ -722,7 +722,7 @@ class _TxTile extends StatelessWidget {
             ),
           ),
           Text(
-            '$prefix${_currencyFmt.format(tx.amount)}',
+            '$prefix${currencyFmt.format(tx.amount)}',
             style: GoogleFonts.poppins(
                 color: color, fontSize: 14, fontWeight: FontWeight.w700),
           ),

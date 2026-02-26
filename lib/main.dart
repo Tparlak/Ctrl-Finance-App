@@ -12,7 +12,9 @@ import 'screens/accounts_screen.dart';
 import 'screens/fixed_expenses_screen.dart';
 import 'screens/ctrl_center_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
+import 'screens/onboarding_screen.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -103,16 +105,50 @@ class CtrlApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? pin = HiveBoxes.settings.get('appLockPin') as String?;
-    final Widget initialScreen = (pin != null && pin.length == 4) ? const AppLockScreen() : const HomeShell();
-
     return MaterialApp(
       title: 'Ctrl',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: initialScreen,
-      builder: (context, child) {
-        return child!;
+      home: const _AppRoot(),
+      builder: (context, child) => child!,
+    );
+  }
+}
+
+class _AppRoot extends StatefulWidget {
+  const _AppRoot();
+  @override
+  State<_AppRoot> createState() => _AppRootState();
+}
+
+class _AppRootState extends State<_AppRoot> {
+  late Future<bool> _onboardingDoneFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _onboardingDoneFuture = SharedPreferences.getInstance()
+        .then((prefs) => prefs.getBool('isOnboardingDone') ?? false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _onboardingDoneFuture,
+      builder: (_, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Scaffold(backgroundColor: AppColors.background);
+        }
+        final done = snap.data ?? false;
+        if (!done) {
+          return OnboardingScreen(
+            onDone: () => setState(() {
+              _onboardingDoneFuture = Future.value(true);
+            }),
+          );
+        }
+        final String? pin = HiveBoxes.settings.get('appLockPin') as String?;
+        return (pin != null && pin.length == 4) ? const AppLockScreen() : const HomeShell();
       },
     );
   }

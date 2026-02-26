@@ -1,18 +1,23 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../data/hive_boxes.dart';
 import '../theme/app_colors.dart';
 import '../widgets/glass_card.dart';
+import '../providers/theme_provider.dart';
+import 'category_manager_screen.dart';
 
-class CtrlCenterScreen extends StatelessWidget {
+class CtrlCenterScreen extends ConsumerWidget {
   const CtrlCenterScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTheme = ref.watch(themeProvider);
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: CustomScrollView(
@@ -146,9 +151,32 @@ class CtrlCenterScreen extends StatelessWidget {
                 _CtrlTile(
                   icon: Icons.palette_rounded,
                   title: 'GÖRÜNÜM',
-                  subtitle: 'Renk ve Tema Ayarları',
+                  subtitle: 'Renk ve Tema Seçimi',
+                  accent: currentTheme.accent,
+                  onTap: () => _showThemeDialog(context, ref),
+                ),
+                _CtrlTile(
+                  icon: Icons.category_rounded,
+                  title: 'KATEGORİLER',
+                  subtitle: 'Gelir/Gider kategorileri',
                   accent: AppColors.gold,
-                  onTap: () => _showThemeDialog(context),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => Scaffold(
+                        extendBodyBehindAppBar: true,
+                        backgroundColor: AppColors.background,
+                        appBar: AppBar(
+                          backgroundColor: Colors.transparent,
+                          elevation: 0,
+                          leading: IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ),
+                        body: const CategoryManagerScreen(),
+                      ),
+                    ),
+                  ),
                 ),
                 _CtrlTile(
                   icon: Icons.storage_rounded,
@@ -190,19 +218,17 @@ class CtrlCenterScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Versiyon 1.1.0',
+                      'Versiyon 2.0.0',
                       style: GoogleFonts.poppins(
                           color: AppColors.textSecondary, fontSize: 12),
                     ),
                     const SizedBox(height: 12),
                     GestureDetector(
-                      onTap: () {
-                        Clipboard.setData(const ClipboardData(
-                            text:
-                                'https://github.com/Tparlak/Ctrl-Finance-App'));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('GitHub linki kopyalandı!')),
-                        );
+                      onTap: () async {
+                        final uri = Uri.parse('https://github.com/Tparlak/Ctrl-Finance-App');
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
                       },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -316,18 +342,66 @@ class CtrlCenterScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _showThemeDialog(BuildContext context) async {
+  Future<void> _showThemeDialog(BuildContext context, WidgetRef ref) async {
+    final current = ref.read(themeProvider);
     await showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Tema Aktarımı', style: GoogleFonts.poppins(color: AppColors.gold)),
-        content: Text('VIP Teman varsayılan olarak "Koyu Zemin & Altın"dır. İlerleyen güncellemelerde "Gece Mavisi" ve "Safir" eklenecek!', style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13)),
+        title: Text('Tema Seç', style: GoogleFonts.poppins(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+        content: StatefulBuilder(builder: (ctx, setS) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: AppThemeVariant.values.map((theme) {
+              final selected = current == theme;
+              return GestureDetector(
+                onTap: () async {
+                  await ref.read(themeProvider.notifier).setTheme(theme);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: selected ? theme.accent.withValues(alpha: 0.15) : AppColors.glassBg,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: selected ? theme.accent : AppColors.glassBorder,
+                      width: selected ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          gradient: theme.gradient,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(theme.label,
+                            style: GoogleFonts.poppins(
+                              color: selected ? theme.accent : AppColors.textPrimary,
+                              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                            )),
+                      ),
+                      if (selected)
+                        Icon(Icons.check_circle_rounded, color: theme.accent, size: 20),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          );
+        }),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('TAMAM', style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+            child: Text('KAPAT', style: GoogleFonts.poppins(color: AppColors.textSecondary)),
           ),
         ],
       ),

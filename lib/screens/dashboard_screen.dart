@@ -8,8 +8,9 @@ import '../providers/transaction_provider.dart';
 import '../providers/category_provider.dart';
 import '../models/transaction_model.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/add_transaction_sheet.dart';
 
-final _currencyFmt = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
+
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -50,7 +51,7 @@ class DashboardScreen extends ConsumerWidget {
                     shaderCallback: (bounds) =>
                         AppColors.goldGradient.createShader(bounds),
                     child: Text(
-                      _currencyFmt.format(totalBalance),
+                      currencyFmt.format(totalBalance),
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 44,
@@ -133,12 +134,72 @@ class DashboardScreen extends ConsumerWidget {
               delegate: SliverChildBuilderDelegate(
                 (context, idx) {
                   final tx = recent[idx];
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                    child: _TransactionTile(
-                      tx: tx,
-                      accounts: accounts,
-                      categories: categories,
+                  return Dismissible(
+                    key: Key(tx.id),
+                    direction: DismissDirection.horizontal,
+                    background: Container(
+                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.blue.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(left: 16),
+                      child: const Icon(Icons.edit_outlined, color: AppColors.blue),
+                    ),
+                    secondaryBackground: Container(
+                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.red.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 16),
+                      child: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
+                    ),
+                    confirmDismiss: (direction) async {
+                      if (direction == DismissDirection.endToStart) {
+                        // Delete
+                        return await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            backgroundColor: AppColors.surface,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            title: Text('İşlemi Sil?', style: GoogleFonts.poppins(color: AppColors.textPrimary)),
+                            content: Text('Bu işlem kalıcı olarak silinecek.', style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(context, false), child: Text('VAZGEÇ', style: GoogleFonts.poppins(color: AppColors.textSecondary))),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                style: ElevatedButton.styleFrom(backgroundColor: AppColors.red, foregroundColor: Colors.white),
+                                child: Text('SİL', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else {
+                        // Edit
+                        if (context.mounted) {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => AddTransactionSheet(existingTransaction: tx),
+                          );
+                        }
+                        return false;
+                      }
+                    },
+                    onDismissed: (_) {
+                      ref.read(transactionProvider.notifier).deleteTransaction(tx.id);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      child: _TransactionTile(
+                        tx: tx,
+                        accounts: accounts,
+                        categories: categories,
+                      ),
                     ),
                   );
                 },
@@ -205,7 +266,7 @@ class _SummaryCard extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1)),
                   Text(
-                    _currencyFmt.format(amount),
+                    currencyFmt.format(amount),
                     style: GoogleFonts.poppins(
                       color: AppColors.textPrimary,
                       fontSize: 13,
@@ -297,7 +358,7 @@ class _TransactionTile extends StatelessWidget {
             ),
           ),
           Text(
-            '$prefix${_currencyFmt.format(tx.amount)}',
+            '$prefix${currencyFmt.format(tx.amount)}',
             style: GoogleFonts.poppins(
               color: color,
               fontSize: 14,

@@ -1,4 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+/// Global currency formatter: 55.000 ₺ format
+final currencyFmt = NumberFormat.currency(
+  locale: 'tr_TR',
+  symbol: '₺',
+  decimalDigits: 2,
+);
 
 class AppColors {
   AppColors._();

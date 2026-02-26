@@ -18,7 +18,8 @@ void showAddTransactionSheet(BuildContext context) {
 }
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
-  const AddTransactionSheet({super.key});
+  final dynamic existingTransaction; // TransactionModel? - kept as dynamic to avoid circular dep
+  const AddTransactionSheet({super.key, this.existingTransaction});
 
   @override
   ConsumerState<AddTransactionSheet> createState() =>
@@ -41,9 +42,23 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    final existing = widget.existingTransaction;
+    int initialTab = 1; // default expense
+    if (existing != null) {
+      // Pre-fill for edit mode
+      _amountController.text = existing.amount.toString();
+      _descController.text = existing.description;
+      _selectedDate = existing.date;
+      _fromAccountId = existing.fromAccountId;
+      _toAccountId = existing.toAccountId;
+      _selectedCategoryId = existing.categoryId;
+      if (existing.type == 'income') initialTab = 0;
+      else if (existing.type == 'expense') initialTab = 1;
+      else initialTab = 2;
+    }
+    _tabController = TabController(length: 3, vsync: this, initialIndex: initialTab);
     _tabController.addListener(() => setState(() {
-      _selectedCategoryId = null; // reset category on tab switch
+      _selectedCategoryId = null;
     }));
   }
 

@@ -8,7 +8,7 @@ import '../providers/account_provider.dart';
 import '../models/fixed_expense.dart';
 import '../widgets/glass_card.dart';
 
-final _currencyFmt = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
+
 final _dateFmt = DateFormat('dd MMM', 'tr_TR');
 
 class FixedExpensesScreen extends ConsumerWidget {
@@ -324,7 +324,7 @@ class _FixedExpenseCard extends ConsumerWidget {
                 ),
               ),
               Text(
-                _currencyFmt.format(expense.amount),
+                currencyFmt.format(expense.amount),
                 style: GoogleFonts.poppins(
                   color: isPaid ? AppColors.green : AppColors.red,
                   fontSize: 16,
