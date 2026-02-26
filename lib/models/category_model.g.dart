@@ -20,7 +20,7 @@ class CategoryModelAdapter extends TypeAdapter<CategoryModel> {
       id: fields[0] as String,
       name: fields[1] as String,
       iconCodePoint: fields[2] as int,
-      type: fields[3] as String,
+      type: fields[3] == null ? 'expense' : fields[3] as String,
     );
   }
 

@@ -14,7 +14,7 @@ class CategoryModel extends HiveObject {
   int iconCodePoint;
 
   /// 'income' or 'expense'
-  @HiveField(3)
+  @HiveField(3, defaultValue: 'expense')
   String type;
 
   CategoryModel({

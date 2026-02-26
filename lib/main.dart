@@ -61,6 +61,20 @@ Future<void> main() async {
                     style: const TextStyle(color: Colors.redAccent, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      try {
+                        await Hive.deleteFromDisk();
+                        SystemNavigator.pop();
+                      } catch (_) {
+                        SystemNavigator.pop();
+                      }
+                    },
+                    icon: const Icon(Icons.delete_forever, color: Colors.white),
+                    label: const Text('Verileri Sıfırla ve Çık', style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  ),
                 ],
               ),
             ),
