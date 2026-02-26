@@ -1,10 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
+import '../providers/theme_provider.dart';
 import '../widgets/add_transaction_sheet.dart';
 
-class VipBottomNavBar extends StatelessWidget {
+class VipBottomNavBar extends ConsumerWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
@@ -15,7 +17,10 @@ class VipBottomNavBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accent = ref.watch(themeProvider).accent;
+    final accentGradient = ref.watch(themeProvider).gradient;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: ClipRRect(
@@ -35,12 +40,14 @@ class VipBottomNavBar extends StatelessWidget {
                   icon: Icons.dashboard_rounded,
                   label: 'Ana Sayfa',
                   selected: currentIndex == 0,
+                  accent: accent,
                   onTap: () => onTap(0),
                 ),
                 _NavItem(
                   icon: Icons.account_balance_wallet_rounded,
                   label: 'Hesaplar',
                   selected: currentIndex == 1,
+                  accent: accent,
                   onTap: () => onTap(1),
                 ),
                 // FAB center
@@ -50,11 +57,11 @@ class VipBottomNavBar extends StatelessWidget {
                     child: Container(
                       margin: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        gradient: AppColors.goldGradient,
+                        gradient: accentGradient,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.gold.withValues(alpha: 0.4),
+                            color: accent.withValues(alpha: 0.4),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -69,12 +76,14 @@ class VipBottomNavBar extends StatelessWidget {
                   icon: Icons.receipt_long_rounded,
                   label: 'Giderler',
                   selected: currentIndex == 2,
+                  accent: accent,
                   onTap: () => onTap(2),
                 ),
                 _NavItem(
                   icon: Icons.hub_rounded,
                   label: 'Ctrl',
                   selected: currentIndex == 3,
+                  accent: accent,
                   onTap: () => onTap(3),
                 ),
               ],
@@ -90,18 +99,20 @@ class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool selected;
+  final Color accent;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.icon,
     required this.label,
     required this.selected,
+    required this.accent,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.blue : AppColors.textSecondary;
+    final color = selected ? accent : AppColors.textSecondary;
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -126,3 +137,4 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
+

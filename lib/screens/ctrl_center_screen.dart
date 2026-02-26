@@ -10,6 +10,10 @@ import '../data/hive_boxes.dart';
 import '../theme/app_colors.dart';
 import '../widgets/glass_card.dart';
 import '../providers/theme_provider.dart';
+import '../providers/account_provider.dart';
+import '../providers/transaction_provider.dart';
+import '../providers/category_provider.dart';
+import '../providers/fixed_expense_provider.dart';
 import 'category_manager_screen.dart';
 
 class CtrlCenterScreen extends ConsumerWidget {
@@ -183,7 +187,7 @@ class CtrlCenterScreen extends ConsumerWidget {
                   title: 'VERİ YÖNETİMİ',
                   subtitle: 'Yedekle & Sıfırla',
                   accent: AppColors.red,
-                  onTap: () => _showResetDialog(context),
+                  onTap: () => _showResetDialog(context, ref),
                 ),
               ]),
             ),
@@ -408,7 +412,7 @@ class CtrlCenterScreen extends ConsumerWidget {
     );
   }
 
-  void _showResetDialog(BuildContext context) {
+  void _showResetDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -416,13 +420,11 @@ class CtrlCenterScreen extends ConsumerWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Tüm Verileri Sıfırla',
-          style:
-              GoogleFonts.poppins(color: AppColors.red, fontWeight: FontWeight.w700),
+          style: GoogleFonts.poppins(color: AppColors.red, fontWeight: FontWeight.w700),
         ),
         content: Text(
-          'Tüm işlem, hesap ve kategori verileri kalıcı olarak silinecek. Bu işlem geri alınamaz.',
-          style:
-              GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13),
+          'Tüm işlem, hesap, kategori ve sabit gider verileri kalıcı olarak silinecek. Bu işlem geri alınamaz.',
+          style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13),
         ),
         actions: [
           TextButton(
@@ -431,7 +433,31 @@ class CtrlCenterScreen extends ConsumerWidget {
                 style: GoogleFonts.poppins(color: AppColors.textSecondary)),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () async {
+              Navigator.pop(context);
+              // ── Tüm Hive box'larını temizle ───────────────────────────
+              await HiveBoxes.accounts.clear();
+              await HiveBoxes.transactions.clear();
+              await HiveBoxes.categories.clear();
+              await HiveBoxes.fixedExpenses.clear();
+              // ── Seeded flag'i sıfırla (bir dahaki açılışta seed tekrar çalışmasın) ─
+              await HiveBoxes.settings.delete('isSeeded');
+              // ── Providers'ı yenile ─────────────────────────────────────
+              ref.invalidate(accountProvider);
+              ref.invalidate(transactionProvider);
+              ref.invalidate(categoryProvider);
+              ref.invalidate(fixedExpenseProvider);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Tüm veriler sıfırlandı ✓',
+                        style: GoogleFonts.poppins(color: Colors.white)),
+                    backgroundColor: AppColors.red,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
             child: Text('SIFIRLA',
                 style: GoogleFonts.poppins(
                     color: AppColors.red, fontWeight: FontWeight.w700)),

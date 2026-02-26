@@ -41,6 +41,25 @@ class AccountNotifier extends StateNotifier<List<Account>> {
   }
 
   Future<void> deleteAccount(String accountId) async {
+    // ── Cascade: delete all transactions linked to this account ──────────────
+    final txsToDelete = HiveBoxes.transactions.values
+        .where((t) => t.fromAccountId == accountId || t.toAccountId == accountId)
+        .map((t) => t.id)
+        .toList();
+    for (final id in txsToDelete) {
+      await HiveBoxes.transactions.delete(id);
+    }
+
+    // ── Cascade: delete all fixed expenses linked to this account ────────────
+    final fxToDelete = HiveBoxes.fixedExpenses.values
+        .where((f) => f.accountId == accountId)
+        .map((f) => f.id)
+        .toList();
+    for (final id in fxToDelete) {
+      await HiveBoxes.fixedExpenses.delete(id);
+    }
+
+    // ── Delete the account itself ─────────────────────────────────────────────
     await HiveBoxes.accounts.delete(accountId);
     refresh();
   }
