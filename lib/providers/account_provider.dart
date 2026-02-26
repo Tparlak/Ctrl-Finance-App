@@ -22,9 +22,22 @@ class AccountNotifier extends StateNotifier<List<Account>> {
   }
 
   Future<void> addAccount(String name) async {
-    const uuid = 'uuid_placeholder'; // handled by caller with Uuid()
-    final account = Account(id: uuid, name: name, currentBalance: 0.0);
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final account = Account(id: id, name: name, currentBalance: 0.0);
     await HiveBoxes.accounts.put(account.id, account);
+    refresh();
+  }
+
+  Future<void> deleteAccount(String accountId) async {
+    await HiveBoxes.accounts.delete(accountId);
+    refresh();
+  }
+
+  Future<void> renameAccount(String accountId, String newName) async {
+    final account = HiveBoxes.accounts.get(accountId);
+    if (account == null) return;
+    account.name = newName;
+    await account.save();
     refresh();
   }
 }

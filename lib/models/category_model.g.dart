@@ -20,19 +20,23 @@ class CategoryModelAdapter extends TypeAdapter<CategoryModel> {
       id: fields[0] as String,
       name: fields[1] as String,
       iconCodePoint: fields[2] as int,
+      // Field 3 may not exist in older records — default to 'expense'
+      type: fields[3] as String? ?? 'expense',
     );
   }
 
   @override
   void write(BinaryWriter writer, CategoryModel obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.iconCodePoint);
+      ..write(obj.iconCodePoint)
+      ..writeByte(3)
+      ..write(obj.type);
   }
 
   @override

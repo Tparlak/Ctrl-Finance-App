@@ -67,9 +67,19 @@ class HiveBoxes {
       }
     }
 
-    // Seed categories — using Icons.xxx.codePoint for guaranteed correct values
-    if (categories.isEmpty) {
-      final seeds = [
+    // Migrate existing categories: ensure type field is set
+    for (final cat in categories.values) {
+      if (cat.type != 'income' && cat.type != 'expense') {
+        cat.type = 'expense';
+        await cat.save();
+      }
+    }
+
+    // Seed expense categories
+    final hasExpenseCats =
+        categories.values.any((c) => c.type == 'expense');
+    if (!hasExpenseCats) {
+      final expenseSeeds = [
         {'name': 'Market',  'icon': Icons.shopping_cart.codePoint},
         {'name': 'Sigara',  'icon': Icons.smoking_rooms.codePoint},
         {'name': 'Yakıt',   'icon': Icons.local_gas_station.codePoint},
@@ -79,11 +89,34 @@ class HiveBoxes {
         {'name': 'Ulaşım',  'icon': Icons.directions_bus.codePoint},
         {'name': 'Diğer',   'icon': Icons.more_horiz.codePoint},
       ];
-      for (final s in seeds) {
+      for (final s in expenseSeeds) {
         final cat = CategoryModel(
           id: uuid.v4(),
           name: s['name'] as String,
           iconCodePoint: s['icon'] as int,
+          type: 'expense',
+        );
+        await categories.put(cat.id, cat);
+      }
+    }
+
+    // Seed income categories
+    final hasIncomeCats =
+        categories.values.any((c) => c.type == 'income');
+    if (!hasIncomeCats) {
+      final incomeSeeds = [
+        {'name': 'Maaş',        'icon': Icons.work.codePoint},
+        {'name': 'Yol Parası',  'icon': Icons.directions_bus.codePoint},
+        {'name': 'Bayram',      'icon': Icons.celebration.codePoint},
+        {'name': 'Kampanya',    'icon': Icons.redeem.codePoint},
+        {'name': 'Ekleme',      'icon': Icons.add_circle_outline.codePoint},
+      ];
+      for (final s in incomeSeeds) {
+        final cat = CategoryModel(
+          id: uuid.v4(),
+          name: s['name'] as String,
+          iconCodePoint: s['icon'] as int,
+          type: 'income',
         );
         await categories.put(cat.id, cat);
       }

@@ -9,6 +9,7 @@ import 'theme/app_colors.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/accounts_screen.dart';
 import 'screens/fixed_expenses_screen.dart';
+import 'screens/ctrl_center_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 
 Future<void> main() async {
@@ -87,7 +88,7 @@ class _HomeShellState extends State<HomeShell> {
     DashboardScreen(),
     AccountsScreen(),
     FixedExpensesScreen(),
-    _SettingsPlaceholder(),
+    CtrlCenterScreen(),
   ];
 
   void _onNavTap(int index) {
@@ -176,23 +177,3 @@ class _GlowOrb extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Settings placeholder (4th tab)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SettingsPlaceholder extends StatelessWidget {
-  const _SettingsPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SafeArea(
-      child: Center(
-        child: Icon(
-          Icons.settings_outlined,
-          color: AppColors.textSecondary,
-          size: 48,
-        ),
-      ),
-    );
-  }
-}

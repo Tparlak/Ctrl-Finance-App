@@ -13,9 +13,14 @@ class CategoryModel extends HiveObject {
   @HiveField(2)
   int iconCodePoint;
 
+  /// 'income' or 'expense'
+  @HiveField(3)
+  String type;
+
   CategoryModel({
     required this.id,
     required this.name,
     required this.iconCodePoint,
+    this.type = 'expense',
   });
 }

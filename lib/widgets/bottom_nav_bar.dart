@@ -72,8 +72,8 @@ class VipBottomNavBar extends StatelessWidget {
                   onTap: () => onTap(2),
                 ),
                 _NavItem(
-                  icon: Icons.more_horiz_rounded,
-                  label: 'Diğer',
+                  icon: Icons.hub_rounded,
+                  label: 'Ctrl',
                   selected: currentIndex == 3,
                   onTap: () => onTap(3),
                 ),

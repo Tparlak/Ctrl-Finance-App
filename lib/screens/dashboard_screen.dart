@@ -17,14 +17,12 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final totalBalance = ref.watch(totalBalanceProvider);
-    // Summary cards: CURRENT MONTH only (per spec)
-    final monthIncome = ref.watch(currentMonthIncomeProvider);
-    final monthExpense = ref.watch(currentMonthExpenseProvider);
+    // Summary cards: ALL-TIME totals
+    final totalIncome = ref.watch(totalIncomeProvider);
+    final totalExpense = ref.watch(totalExpenseProvider);
     final transactions = ref.watch(transactionProvider);
     final categories = ref.watch(categoryProvider);
     final accounts = ref.watch(accountProvider);
-    final now = DateTime.now();
-    final monthLabel = DateFormat('MMMM', 'tr_TR').format(now);
 
     final recent = transactions.take(30).toList();
 
@@ -66,19 +64,21 @@ class DashboardScreen extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: _SummaryCard(
-                          label: '$monthLabel Geliri',
-                          amount: monthIncome,
+                          label: 'TOPLAM GELİR',
+                          amount: totalIncome,
                           gradient: AppColors.greenGradient,
                           icon: Icons.arrow_downward_rounded,
+                          glowColor: AppColors.green,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _SummaryCard(
-                          label: '$monthLabel Gideri',
-                          amount: monthExpense,
+                          label: 'TOPLAM GİDER',
+                          amount: totalExpense,
                           gradient: AppColors.redGradient,
                           icon: Icons.arrow_upward_rounded,
+                          glowColor: AppColors.red,
                         ),
                       ),
                     ],
@@ -157,51 +157,68 @@ class _SummaryCard extends StatelessWidget {
   final double amount;
   final LinearGradient gradient;
   final IconData icon;
+  final Color glowColor;
 
   const _SummaryCard({
     required this.label,
     required this.amount,
     required this.gradient,
     required this.icon,
+    required this.glowColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              gradient: gradient,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: Colors.white, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: GoogleFonts.poppins(
-                        color: AppColors.textSecondary, fontSize: 10)),
-                Text(
-                  _currencyFmt.format(amount),
-                  style: GoogleFonts.poppins(
-                    color: AppColors.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: glowColor.withValues(alpha: 0.12),
+            blurRadius: 16,
+            spreadRadius: 2,
           ),
         ],
+      ),
+      child: GlassCard(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: gradient,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: GoogleFonts.poppins(
+                          color: AppColors.textSecondary,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1)),
+                  Text(
+                    _currencyFmt.format(amount),
+                    style: GoogleFonts.poppins(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

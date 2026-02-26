@@ -42,7 +42,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() => setState(() {}));
+    _tabController.addListener(() => setState(() {
+      _selectedCategoryId = null; // reset category on tab switch
+    }));
   }
 
   @override
@@ -123,7 +125,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
   @override
   Widget build(BuildContext context) {
     final accounts = ref.watch(accountProvider);
-    final categories = ref.watch(categoryProvider);
+    // Show income or expense categories based on active tab
+    final categories = _tab == 0
+        ? ref.watch(incomeCategoryProvider)
+        : ref.watch(expenseCategoryProvider);
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
