@@ -84,6 +84,7 @@ class FixedExpensesScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fixed_expenses_fab',
         onPressed: () => _showAddDialog(context, ref),
         backgroundColor: AppColors.gold,
         foregroundColor: AppColors.background,

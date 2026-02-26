@@ -60,8 +60,6 @@ class CtrlApp extends StatelessWidget {
       theme: AppTheme.darkTheme,
       home: const HomeShell(),
       builder: (context, child) {
-        // Disable the red error screen in release builds
-        ErrorWidget.builder = (FlutterErrorDetails details) => const SizedBox();
         return child!;
       },
     );

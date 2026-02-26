@@ -75,6 +75,7 @@ class _AddAccountFab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return FloatingActionButton.extended(
+      heroTag: 'accounts_fab',
       onPressed: () => _showAddAccountSheet(context, ref),
       backgroundColor: AppColors.gold,
       foregroundColor: Colors.black,
