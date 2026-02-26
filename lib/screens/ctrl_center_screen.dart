@@ -281,8 +281,11 @@ class CtrlCenterScreen extends StatelessWidget {
 
   Future<void> _exportToCSV(BuildContext context) async {
     try {
-      final docs = await getApplicationDocumentsDirectory();
-      final path = '${docs.path}/Ctrl_Export_${DateTime.now().millisecondsSinceEpoch}.csv';
+      final dir = Directory('/storage/emulated/0/Download');
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+      final path = '${dir.path}/Ctrl_Export_${DateTime.now().millisecondsSinceEpoch}.csv';
       final file = File(path);
 
       final buffer = StringBuffer();

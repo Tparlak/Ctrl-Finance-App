@@ -27,22 +27,37 @@ class FixedExpensesScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 60, 20, 4),
-              child: Column(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'SABİT GİDERLER',
-                    style: GoogleFonts.poppins(
-                      color: AppColors.textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'SABİT GİDERLER',
+                        style: GoogleFonts.poppins(
+                          color: AppColors.textPrimary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      Text(
+                        monthLabel,
+                        style: GoogleFonts.poppins(
+                            color: AppColors.textSecondary, fontSize: 13),
+                      ),
+                    ],
                   ),
-                  Text(
-                    monthLabel,
-                    style: GoogleFonts.poppins(
-                        color: AppColors.textSecondary, fontSize: 13),
+                  IconButton(
+                    onPressed: () => _showAddDialog(context, ref),
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppColors.gold.withValues(alpha: 0.15),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.all(12),
+                    ),
+                    icon: const Icon(Icons.add_rounded, color: AppColors.gold, size: 24),
                   ),
                 ],
               ),
@@ -82,15 +97,6 @@ class FixedExpensesScreen extends ConsumerWidget {
             ),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'fixed_expenses_fab',
-        onPressed: () => _showAddDialog(context, ref),
-        backgroundColor: AppColors.gold,
-        foregroundColor: AppColors.background,
-        icon: const Icon(Icons.add),
-        label: Text('Sabit Gider Ekle',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
       ),
     );
   }
