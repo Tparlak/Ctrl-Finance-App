@@ -88,87 +88,154 @@ class _AddAccountFab extends ConsumerWidget {
 
   void _showAddAccountSheet(BuildContext context, WidgetRef ref) {
     final ctrl = TextEditingController();
+    String selectedType = 'BANK';
+    bool includedInTotal = true;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) {
-        return Padding(
-          padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                  color: AppColors.gold.withValues(alpha: 0.3), width: 1),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Yeni Hesap',
-                  style: GoogleFonts.poppins(
-                    color: AppColors.gold,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                      color: AppColors.gold.withValues(alpha: 0.3), width: 1),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: ctrl,
-                  autofocus: true,
-                  style: GoogleFonts.poppins(color: AppColors.textPrimary),
-                  decoration: InputDecoration(
-                    hintText: 'Hesap adı (örn: Akbank)',
-                    hintStyle: GoogleFonts.poppins(
-                        color: AppColors.textSecondary),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                          color: AppColors.gold.withValues(alpha: 0.3)),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Yeni Hesap',
+                      style: GoogleFonts.poppins(
+                        color: AppColors.gold,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: AppColors.gold, width: 1.5),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: ctrl,
+                      autofocus: true,
+                      style: GoogleFonts.poppins(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        hintText: 'Hesap adı (örn: Akbank)',
+                        hintStyle: GoogleFonts.poppins(
+                            color: AppColors.textSecondary),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: AppColors.gold.withValues(alpha: 0.3)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              const BorderSide(color: AppColors.gold, width: 1.5),
+                        ),
+                        filled: true,
+                        fillColor: AppColors.glassBg,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                      ),
                     ),
-                    filled: true,
-                    fillColor: AppColors.glassBg,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                  ),
+                    const SizedBox(height: 16),
+                    // Type selector
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.glassBg,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.gold.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedType,
+                          isExpanded: true,
+                          dropdownColor: AppColors.surface,
+                          style: GoogleFonts.poppins(color: AppColors.textPrimary),
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.gold),
+                          items: const [
+                            DropdownMenuItem(value: 'BANK', child: Text('Banka Hesabı')),
+                            DropdownMenuItem(value: 'CASH', child: Text('Nakit Kasa')),
+                            DropdownMenuItem(value: 'CREDIT_CARD', child: Text('Kredi Kartı')),
+                            DropdownMenuItem(value: 'SAVINGS', child: Text('Birikim Hesabı (Savings)')),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              setSheetState(() => selectedType = val);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Included in Total switch
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      activeColor: AppColors.gold,
+                      title: Text(
+                        'Ana Bakiyeye Dahil Et',
+                        style: GoogleFonts.poppins(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Bu hesabın bakiyesi genel toplama yansısın mı?',
+                        style: GoogleFonts.poppins(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                      value: includedInTotal,
+                      onChanged: (val) {
+                        setSheetState(() => includedInTotal = val);
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.gold,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () {
+                          final name = ctrl.text.trim();
+                          if (name.isNotEmpty) {
+                            ref.read(accountProvider.notifier).addAccount(
+                                  name: name,
+                                  type: selectedType,
+                                  isIncludedInTotal: includedInTotal,
+                                );
+                            Navigator.of(context).pop();
+                          }
+                        },
+                        child: Text(
+                          'KAYDET',
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.gold,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () {
-                      final name = ctrl.text.trim();
-                      if (name.isNotEmpty) {
-                        ref.read(accountProvider.notifier).addAccount(name);
-                        Navigator.of(context).pop();
-                      }
-                    },
-                    child: Text(
-                      'KAYDET',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -218,7 +285,7 @@ class _AccountCardState extends ConsumerState<_AccountCard> {
     if (newName.isNotEmpty) {
       ref
           .read(accountProvider.notifier)
-          .renameAccount(widget.account.id, newName);
+          .updateAccountSettings(widget.account.id, name: newName);
     }
     setState(() => _isEditing = false);
   }
@@ -270,6 +337,15 @@ class _NormalView extends StatelessWidget {
   final VoidCallback onSwipe;
   const _NormalView({required this.account, required this.onSwipe});
 
+  String _getTypeLabel(String type) {
+    switch (type) {
+      case 'CASH': return 'Nakit Kasa';
+      case 'CREDIT_CARD': return 'Kredi Kartı';
+      case 'SAVINGS': return 'Birikim Hesabı';
+      default: return 'Banka Hesabı';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isPositive = account.currentBalance >= 0;
@@ -292,7 +368,7 @@ class _NormalView extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  account.name.substring(0, 1).toUpperCase(),
+                  account.name.isNotEmpty ? account.name.substring(0, 1).toUpperCase() : 'A',
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontSize: 18,
@@ -314,10 +390,19 @@ class _NormalView extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Text(
-                    'Kaydırmak için sola kaydır',
-                    style: GoogleFonts.poppins(
-                        color: AppColors.textSecondary, fontSize: 11),
+                  Row(
+                    children: [
+                      Text(
+                        _getTypeLabel(account.type),
+                        style: GoogleFonts.poppins(
+                            color: AppColors.textSecondary, fontSize: 11),
+                      ),
+                      if (!account.isIncludedInTotal) ...[
+                        const SizedBox(width: 6),
+                        const Icon(Icons.visibility_off_rounded,
+                            color: AppColors.textSecondary, size: 12),
+                      ],
+                    ],
                   ),
                 ],
               ),

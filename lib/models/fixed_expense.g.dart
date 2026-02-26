@@ -26,13 +26,17 @@ class FixedExpenseAdapter extends TypeAdapter<FixedExpense> {
       isPaid: fields[6] as bool,
       accountId: fields[7] as String?,
       monthYear: fields[8] as String,
+      isRecurring: fields[9] == null ? false : fields[9] as bool,
+      recurringType: fields[10] == null ? 'MONTHLY' : fields[10] as String,
+      totalInstallments: fields[11] == null ? 1 : fields[11] as int,
+      currentInstallment: fields[12] == null ? 1 : fields[12] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, FixedExpense obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +54,15 @@ class FixedExpenseAdapter extends TypeAdapter<FixedExpense> {
       ..writeByte(7)
       ..write(obj.accountId)
       ..writeByte(8)
-      ..write(obj.monthYear);
+      ..write(obj.monthYear)
+      ..writeByte(9)
+      ..write(obj.isRecurring)
+      ..writeByte(10)
+      ..write(obj.recurringType)
+      ..writeByte(11)
+      ..write(obj.totalInstallments)
+      ..writeByte(12)
+      ..write(obj.currentInstallment);
   }
 
   @override

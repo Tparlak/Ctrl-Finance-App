@@ -45,6 +45,10 @@ class FixedExpenseNotifier extends StateNotifier<List<FixedExpense>> {
         // Clone from the most recent one
         entry.value.sort((a, b) => b.monthYear.compareTo(a.monthYear));
         final source = entry.value.first;
+        
+        if (!source.isRecurring) continue;
+        if (source.recurringType == 'INSTALLMENT' && source.currentInstallment >= source.totalInstallments) continue;
+
         final clone = FixedExpense(
           id: _uuid.v4(),
           title: source.title,
@@ -55,6 +59,10 @@ class FixedExpenseNotifier extends StateNotifier<List<FixedExpense>> {
           isPaid: false,
           accountId: null,
           monthYear: currentKey,
+          isRecurring: source.isRecurring,
+          recurringType: source.recurringType,
+          totalInstallments: source.totalInstallments,
+          currentInstallment: source.recurringType == 'INSTALLMENT' ? source.currentInstallment + 1 : 1,
         );
         await HiveBoxes.fixedExpenses.put(clone.id, clone);
       }
@@ -66,6 +74,9 @@ class FixedExpenseNotifier extends StateNotifier<List<FixedExpense>> {
     required double amount,
     required DateTime billArrivalDate,
     required DateTime dueDate,
+    bool isRecurring = false,
+    String recurringType = 'MONTHLY',
+    int totalInstallments = 1,
   }) async {
     final now = DateTime.now();
     final expense = FixedExpense(
@@ -78,6 +89,10 @@ class FixedExpenseNotifier extends StateNotifier<List<FixedExpense>> {
       isPaid: false,
       accountId: null,
       monthYear: _monthYearKey(now),
+      isRecurring: isRecurring,
+      recurringType: recurringType,
+      totalInstallments: totalInstallments,
+      currentInstallment: 1,
     );
     await HiveBoxes.fixedExpenses.put(expense.id, expense);
     _refresh();

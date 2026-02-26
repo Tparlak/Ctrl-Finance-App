@@ -13,9 +13,21 @@ class Account extends HiveObject {
   @HiveField(2)
   double currentBalance;
 
+  @HiveField(3, defaultValue: 'BANK')
+  String type;
+
+  @HiveField(4, defaultValue: true)
+  bool isIncludedInTotal;
+
+  @HiveField(5, defaultValue: 0.0)
+  double creditLimit;
+
   Account({
     required this.id,
     required this.name,
     required this.currentBalance,
+    this.type = 'BANK',
+    this.isIncludedInTotal = true,
+    this.creditLimit = 0.0,
   });
 }

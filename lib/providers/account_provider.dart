@@ -21,9 +21,21 @@ class AccountNotifier extends StateNotifier<List<Account>> {
     refresh();
   }
 
-  Future<void> addAccount(String name) async {
+  Future<void> addAccount({
+    required String name,
+    String type = 'BANK',
+    bool isIncludedInTotal = true,
+    double creditLimit = 0.0,
+  }) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
-    final account = Account(id: id, name: name, currentBalance: 0.0);
+    final account = Account(
+      id: id,
+      name: name,
+      currentBalance: 0.0,
+      type: type,
+      isIncludedInTotal: isIncludedInTotal,
+      creditLimit: creditLimit,
+    );
     await HiveBoxes.accounts.put(account.id, account);
     refresh();
   }
@@ -33,10 +45,19 @@ class AccountNotifier extends StateNotifier<List<Account>> {
     refresh();
   }
 
-  Future<void> renameAccount(String accountId, String newName) async {
+  Future<void> updateAccountSettings(
+    String accountId, {
+    String? name,
+    String? type,
+    bool? isIncludedInTotal,
+    double? creditLimit,
+  }) async {
     final account = HiveBoxes.accounts.get(accountId);
     if (account == null) return;
-    account.name = newName;
+    if (name != null) account.name = name;
+    if (type != null) account.type = type;
+    if (isIncludedInTotal != null) account.isIncludedInTotal = isIncludedInTotal;
+    if (creditLimit != null) account.creditLimit = creditLimit;
     await account.save();
     refresh();
   }
@@ -49,5 +70,7 @@ final accountProvider =
 /// Computed: sum of all account balances
 final totalBalanceProvider = Provider<double>((ref) {
   final accounts = ref.watch(accountProvider);
-  return accounts.fold(0.0, (sum, a) => sum + a.currentBalance);
+  return accounts
+      .where((a) => a.isIncludedInTotal)
+      .fold(0.0, (sum, a) => sum + a.currentBalance);
 });

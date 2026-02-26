@@ -32,6 +32,19 @@ class FixedExpense extends HiveObject {
   @HiveField(8)
   String monthYear;
 
+  @HiveField(9, defaultValue: false)
+  bool isRecurring;
+
+  /// e.g. 'MONTHLY', 'INSTALLMENT'
+  @HiveField(10, defaultValue: 'MONTHLY')
+  String recurringType;
+
+  @HiveField(11, defaultValue: 1)
+  int totalInstallments;
+
+  @HiveField(12, defaultValue: 1)
+  int currentInstallment;
+
   FixedExpense({
     required this.id,
     required this.title,
@@ -42,5 +55,9 @@ class FixedExpense extends HiveObject {
     required this.isPaid,
     this.accountId,
     required this.monthYear,
+    this.isRecurring = false,
+    this.recurringType = 'MONTHLY',
+    this.totalInstallments = 1,
+    this.currentInstallment = 1,
   });
 }

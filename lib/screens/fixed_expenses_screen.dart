@@ -97,9 +97,11 @@ class FixedExpensesScreen extends ConsumerWidget {
   Future<void> _showAddDialog(BuildContext context, WidgetRef ref) async {
     final titleCtrl = TextEditingController();
     final amountCtrl = TextEditingController();
+    final installmentCtrl = TextEditingController(text: '2');
     DateTime arrivalDate = DateTime.now();
-    DateTime dueDate =
-        DateTime.now().add(const Duration(days: 10));
+    DateTime dueDate = DateTime.now().add(const Duration(days: 10));
+    bool isRecurring = false;
+    String recurringType = 'MONTHLY'; // or 'INSTALLMENT'
 
     await showDialog(
       context: context,
@@ -116,27 +118,58 @@ class FixedExpensesScreen extends ConsumerWidget {
               children: [
                 TextField(
                   controller: titleCtrl,
-                  style:
-                      GoogleFonts.poppins(color: AppColors.textPrimary),
-                  decoration: const InputDecoration(labelText: 'Başlık (Kira, Elektrik…)'),
+                  style: GoogleFonts.poppins(color: AppColors.textPrimary),
+                  decoration: const InputDecoration(labelText: 'Başlık (Kira, D-Smart…)'),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: amountCtrl,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style:
-                      GoogleFonts.poppins(color: AppColors.textPrimary),
-                  decoration:
-                      const InputDecoration(labelText: 'Tutar (₺)'),
+                  style: GoogleFonts.poppins(color: AppColors.textPrimary),
+                  decoration: const InputDecoration(labelText: 'Tutar (₺)'),
                 ),
                 const SizedBox(height: 10),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  activeColor: AppColors.gold,
+                  title: Text('Her Ay Otomatik Ekle',
+                      style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 13)),
+                  value: isRecurring,
+                  onChanged: (val) => setState(() => isRecurring = val),
+                ),
+                if (isRecurring) ...[
+                  Row(
+                    children: [
+                      Radio<String>(
+                        value: 'MONTHLY',
+                        groupValue: recurringType,
+                        activeColor: AppColors.gold,
+                        onChanged: (val) => setState(() => recurringType = val!),
+                      ),
+                      Text('Sürekli (Abonelik)', style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 12)),
+                      Radio<String>(
+                        value: 'INSTALLMENT',
+                        groupValue: recurringType,
+                        activeColor: AppColors.gold,
+                        onChanged: (val) => setState(() => recurringType = val!),
+                      ),
+                      Text('Taksit', style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 12)),
+                    ],
+                  ),
+                  if (recurringType == 'INSTALLMENT')
+                    TextField(
+                      controller: installmentCtrl,
+                      keyboardType: TextInputType.number,
+                      style: GoogleFonts.poppins(color: AppColors.textPrimary),
+                      decoration: const InputDecoration(labelText: 'Toplam Taksit Sayısı (örn: 6)'),
+                    ),
+                  const SizedBox(height: 10),
+                ],
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text('Fatura Tarihi: ${_dateFmt.format(arrivalDate)}',
-                      style: GoogleFonts.poppins(
-                          color: AppColors.textSecondary, fontSize: 13)),
-                  trailing: const Icon(Icons.calendar_today_outlined,
-                      color: AppColors.gold, size: 18),
+                  title: Text('Fatura Geliş: ${_dateFmt.format(arrivalDate)}',
+                      style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13)),
+                  trailing: const Icon(Icons.calendar_today_outlined, color: AppColors.gold, size: 18),
                   onTap: () async {
                     final p = await showDatePicker(
                       context: ctx,
@@ -150,10 +183,8 @@ class FixedExpensesScreen extends ConsumerWidget {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text('Son Ödeme: ${_dateFmt.format(dueDate)}',
-                      style: GoogleFonts.poppins(
-                          color: AppColors.textSecondary, fontSize: 13)),
-                  trailing: const Icon(Icons.event_outlined,
-                      color: AppColors.red, size: 18),
+                      style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13)),
+                  trailing: const Icon(Icons.event_outlined, color: AppColors.red, size: 18),
                   onTap: () async {
                     final p = await showDatePicker(
                       context: ctx,
@@ -177,11 +208,20 @@ class FixedExpensesScreen extends ConsumerWidget {
               onPressed: () async {
                 final amount = double.tryParse(amountCtrl.text.replaceAll(',', '.'));
                 if (titleCtrl.text.isEmpty || amount == null) return;
+                
+                int totalInst = 1;
+                if (isRecurring && recurringType == 'INSTALLMENT') {
+                  totalInst = int.tryParse(installmentCtrl.text) ?? 1;
+                }
+
                 await ref.read(fixedExpenseProvider.notifier).addExpense(
                       title: titleCtrl.text.trim(),
                       amount: amount,
                       billArrivalDate: arrivalDate,
                       dueDate: dueDate,
+                      isRecurring: isRecurring,
+                      recurringType: recurringType,
+                      totalInstallments: totalInst,
                     );
                 if (ctx.mounted) Navigator.pop(ctx);
               },
@@ -240,14 +280,38 @@ class _FixedExpenseCard extends ConsumerWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Text(
-                      isPaid
-                          ? 'Ödendi${expense.paymentDate != null ? ' • ${_dateFmt.format(expense.paymentDate!)}' : ''}'
-                          : 'Bekliyor',
-                      style: GoogleFonts.poppins(
-                        color: isPaid ? AppColors.green : AppColors.textSecondary,
-                        fontSize: 11,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          isPaid
+                              ? 'Ödendi${expense.paymentDate != null ? ' • ${_dateFmt.format(expense.paymentDate!)}' : ''}'
+                              : 'Bekliyor',
+                          style: GoogleFonts.poppins(
+                            color: isPaid ? AppColors.green : AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                        if (expense.isRecurring) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.blue.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              expense.recurringType == 'INSTALLMENT' 
+                                ? 'TAKSİT ${expense.currentInstallment}/${expense.totalInstallments}'
+                                : 'TEKRARLANAN',
+                              style: GoogleFonts.poppins(
+                                color: AppColors.blue,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
