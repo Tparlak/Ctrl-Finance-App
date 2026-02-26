@@ -1,7 +1,7 @@
 name: vip_finance
 description: Ctrl - Personal Finance Tracker
 publish_to: 'none'
-version: 1.1.0+2
+version: 1.1.1+3
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -31,12 +31,12 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/icon/ctrl_logo.png"
+  image_path: "assets/icon/ctrl_logo3d.png"
   adaptive_icon_background: "#000000"
-  adaptive_icon_foreground: "assets/icon/ctrl_logo.png"
+  adaptive_icon_foreground: "assets/icon/ctrl_logo3d.png"
   min_sdk_android: 21
 
 flutter:
   uses-material-design: true
   assets:
-    - assets/icon/ctrl_logo.png
+    - assets/icon/ctrl_logo3d.png
