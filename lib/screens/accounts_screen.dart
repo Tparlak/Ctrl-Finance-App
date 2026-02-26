@@ -20,7 +20,6 @@ class AccountsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: _AddAccountFab(),
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -62,6 +61,12 @@ class AccountsScreen extends ConsumerWidget {
               ),
             ),
           ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: _AddAccountButton(),
+            ),
+          ),
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
@@ -69,20 +74,33 @@ class AccountsScreen extends ConsumerWidget {
   }
 }
 
-// ─── Floating Action Button — Add Account ─────────────────────────────────────
+// ─── Add Account Button (Inline) ───────────────────────────────────────────
 
-class _AddAccountFab extends ConsumerWidget {
+class _AddAccountButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FloatingActionButton.extended(
-      heroTag: 'accounts_fab',
+    return OutlinedButton(
       onPressed: () => _showAddAccountSheet(context, ref),
-      backgroundColor: AppColors.gold,
-      foregroundColor: Colors.black,
-      icon: const Icon(Icons.add_rounded),
-      label: Text(
-        'Hesap Ekle',
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        side: BorderSide(color: AppColors.gold.withValues(alpha: 0.6), width: 1.5),
+        backgroundColor: AppColors.gold.withValues(alpha: 0.1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.add_rounded, color: AppColors.gold),
+          const SizedBox(width: 8),
+          Text(
+            'HESAP EKLE',
+            style: GoogleFonts.poppins(
+              color: AppColors.gold,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
+          ),
+        ],
       ),
     );
   }

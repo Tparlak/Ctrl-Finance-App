@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -54,14 +55,127 @@ class CtrlApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String? pin = HiveBoxes.settings.get('appLockPin') as String?;
+    final Widget initialScreen = (pin != null && pin.length == 4) ? const AppLockScreen() : const HomeShell();
+
     return MaterialApp(
       title: 'Ctrl',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const HomeShell(),
+      home: initialScreen,
       builder: (context, child) {
         return child!;
       },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// App Lock Screen
+// ─────────────────────────────────────────────────────────────────────────────
+
+class AppLockScreen extends StatefulWidget {
+  const AppLockScreen({super.key});
+
+  @override
+  State<AppLockScreen> createState() => _AppLockScreenState();
+}
+
+class _AppLockScreenState extends State<AppLockScreen> {
+  String _input = "";
+
+  void _onDigit(String digit) {
+    if (_input.length < 4) {
+      setState(() => _input += digit);
+      if (_input.length == 4) {
+        final String? truePin = HiveBoxes.settings.get('appLockPin') as String?;
+        if (_input == truePin) {
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const HomeShell()));
+        } else {
+          // wrong pin
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Hatalı PIN!'), backgroundColor: AppColors.red),
+          );
+          setState(() => _input = "");
+        }
+      }
+    }
+  }
+
+  void _onDelete() {
+    if (_input.isNotEmpty) {
+      setState(() => _input = _input.substring(0, _input.length - 1));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Spacer(),
+            Icon(Icons.lock_person_rounded, size: 60, color: AppColors.gold.withValues(alpha: 0.8)),
+            const SizedBox(height: 20),
+            Text('CTRL SECURITY', style: GoogleFonts.poppins(color: AppColors.gold, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 4)),
+            const SizedBox(height: 40),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(4, (index) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                width: 20, height: 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: index < _input.length ? AppColors.gold : Colors.transparent,
+                  border: Border.all(color: AppColors.gold, width: 2),
+                ),
+              )),
+            ),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  childAspectRatio: 1.2,
+                  crossAxisSpacing: 20,
+                  mainAxisSpacing: 20,
+                ),
+                itemCount: 12,
+                itemBuilder: (context, index) {
+                  if (index == 9) return const SizedBox();
+                  if (index == 11) {
+                    return InkWell(
+                      onTap: _onDelete,
+                      borderRadius: BorderRadius.circular(40),
+                      child: const Center(child: Icon(Icons.backspace_outlined, color: AppColors.textPrimary)),
+                    );
+                  }
+                  final digit = index == 10 ? '0' : '${index + 1}';
+                  return InkWell(
+                    onTap: () => _onDigit(digit),
+                    borderRadius: BorderRadius.circular(40),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.glassBg,
+                      ),
+                      child: Center(
+                        child: Text(digit, style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 24, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 60),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -10,6 +10,7 @@ const String _accountsBoxName = 'accounts';
 const String _categoriesBoxName = 'categories';
 const String _transactionsBoxName = 'transactions';
 const String _fixedExpensesBoxName = 'fixed_expenses';
+const String _settingsBoxName = 'settings';
 
 class HiveBoxes {
   static Box<Account> get accounts => Hive.box<Account>(_accountsBoxName);
@@ -19,6 +20,7 @@ class HiveBoxes {
       Hive.box<TransactionModel>(_transactionsBoxName);
   static Box<FixedExpense> get fixedExpenses =>
       Hive.box<FixedExpense>(_fixedExpensesBoxName);
+  static Box get settings => Hive.box(_settingsBoxName);
 
   /// Call once at app startup AFTER Hive.initFlutter()
   static Future<void> openAll() async {
@@ -31,6 +33,7 @@ class HiveBoxes {
     await Hive.openBox<CategoryModel>(_categoriesBoxName);
     await Hive.openBox<TransactionModel>(_transactionsBoxName);
     await Hive.openBox<FixedExpense>(_fixedExpensesBoxName);
+    await Hive.openBox(_settingsBoxName);
 
     await _seedIfEmpty();
   }
