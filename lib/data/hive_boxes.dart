@@ -39,6 +39,9 @@ class HiveBoxes {
   }
 
   static Future<void> _seedIfEmpty() async {
+    final bool isSeeded = settings.get('isSeeded', defaultValue: false) as bool;
+    if (isSeeded) return;
+
     const uuid = Uuid();
 
     // Seed accounts
@@ -124,5 +127,7 @@ class HiveBoxes {
         await categories.put(cat.id, cat);
       }
     }
+    
+    await settings.put('isSeeded', true);
   }
 }

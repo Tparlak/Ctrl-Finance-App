@@ -12,9 +12,11 @@ import 'screens/accounts_screen.dart';
 import 'screens/fixed_expenses_screen.dart';
 import 'screens/ctrl_center_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   // Force portrait orientation
   await SystemChrome.setPreferredOrientations([
@@ -32,18 +34,50 @@ Future<void> main() async {
     ),
   );
 
-  // ─── Local Database ────────────────────────────────────────────────────────
-  await Hive.initFlutter();
-  await HiveBoxes.openAll();
+  try {
+    // ─── Local Database ────────────────────────────────────────────────────────
+    await Hive.initFlutter();
+    await HiveBoxes.openAll();
 
-  // ─── Locale (Turkish date/number formatting) ───────────────────────────────
-  await initializeDateFormatting('tr_TR', null);
+    // ─── Locale (Turkish date/number formatting) ───────────────────────────────
+    await initializeDateFormatting('tr_TR', null);
+  } catch (e) {
+    runApp(
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          backgroundColor: Colors.black,
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 60),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Veritabanı Açılış Hatası\n\n$e',
+                    style: const TextStyle(color: Colors.redAccent, fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    FlutterNativeSplash.remove();
+    return;
+  }
 
   runApp(
     const ProviderScope(
       child: CtrlApp(),
     ),
   );
+  FlutterNativeSplash.remove();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
