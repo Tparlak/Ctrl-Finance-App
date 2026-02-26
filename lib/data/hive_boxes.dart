@@ -40,7 +40,7 @@ class HiveBoxes {
 
     // Seed accounts
     if (accounts.isEmpty) {
-      final initialAccounts = ['kvyt', 'ak1', 'ENP', 'VK', 'CSH'];
+      final initialAccounts = ['Kuveyt Türk', 'Akbank 1', 'Enpara', 'Vakıfbank', 'Nakit Kasa'];
       for (final name in initialAccounts) {
         final account = Account(
           id: uuid.v4(),
@@ -48,6 +48,22 @@ class HiveBoxes {
           currentBalance: 0.0,
         );
         await accounts.put(account.id, account);
+      }
+    } else {
+      // Migrate existing old abbreviation names to full names
+      final migrationMap = {
+        'kvyt': 'Kuveyt Türk',
+        'ak1': 'Akbank 1',
+        'ENP': 'Enpara',
+        'VK': 'Vakıfbank',
+        'CSH': 'Nakit Kasa',
+      };
+      
+      for (final account in accounts.values) {
+        if (migrationMap.containsKey(account.name)) {
+          account.name = migrationMap[account.name]!;
+          await account.save();
+        }
       }
     }
 
