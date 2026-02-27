@@ -156,16 +156,17 @@ class _SlideWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 80, 24, 200),
+      padding: const EdgeInsets.fromLTRB(24, 60, 24, 200),
       child: Column(
         children: [
           Expanded(
             child: Stack(
               children: [
-                // Image in dark glass card
+                // Image in transparent glass card with BoxFit.cover
                 Container(
+                  width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(32),
                     border: Border.all(
                       color: slide.accent.withValues(alpha: 0.35),
@@ -183,16 +184,17 @@ class _SlideWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                     child: Image.asset(
                       slide.image,
-                      fit: BoxFit.contain,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
                     ),
                   ),
                 ),
-                // Bottom gradient fade into black
+                // Seamless bottom gradient fade into background color
                 Positioned(
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  height: 80,
+                  height: 100,
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: const BorderRadius.only(
@@ -204,7 +206,7 @@ class _SlideWidget extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withValues(alpha: 0.9),
+                          AppColors.background,
                         ],
                       ),
                     ),
@@ -213,7 +215,7 @@ class _SlideWidget extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Text(
             slide.title,
             style: GoogleFonts.poppins(
