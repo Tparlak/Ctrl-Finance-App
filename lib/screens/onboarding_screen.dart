@@ -184,8 +184,6 @@ class _SlideWidget extends StatelessWidget {
                     child: Image.asset(
                       slide.image,
                       fit: BoxFit.contain,
-                      color: Colors.transparent,
-                      colorBlendMode: BlendMode.dstIn,
                     ),
                   ),
                 ),
