@@ -11,7 +11,9 @@ import '../models/transaction_model.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/add_transaction_sheet.dart';
 import '../providers/analytics_provider.dart';
+import '../providers/fixed_expense_provider.dart';
 import '../widgets/monthly_pie_chart.dart';
+import '../widgets/upcoming_payment_banner.dart';
 
 
 class DashboardScreen extends ConsumerWidget {
@@ -26,6 +28,7 @@ class DashboardScreen extends ConsumerWidget {
     final transactions = ref.watch(transactionProvider);
     final categories = ref.watch(categoryProvider);
     final accounts = ref.watch(accountProvider);
+    final upcomingCount = ref.watch(fixedExpenseProvider.notifier).upcomingExpenseCount;
 
     final recent = transactions.take(30).toList();
 
@@ -39,6 +42,12 @@ class DashboardScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  UpcomingPaymentBanner(
+                    count: upcomingCount,
+                    onTap: () {
+                      // Optionally navigate to Fixed Expenses tab or screen
+                    },
+                  ),
                   Text(
                     'ANLIK BAKİYE',
                     style: GoogleFonts.poppins(

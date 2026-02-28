@@ -132,6 +132,16 @@ class FixedExpenseNotifier extends StateNotifier<List<FixedExpense>> {
       }
     }
   }
+
+  int get upcomingExpenseCount {
+    final now = DateTime.now();
+    return state.where((e) {
+      if (e.isPaid) return false;
+      final dueDate = DateTime(now.year, now.month, e.dueDate.day);
+      final diff = dueDate.difference(DateTime(now.year, now.month, now.day)).inDays;
+      return diff >= 0 && diff <= 2;
+    }).length;
+  }
 }
 
 final fixedExpenseProvider =
