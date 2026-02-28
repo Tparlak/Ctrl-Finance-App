@@ -18,8 +18,9 @@ class VipBottomNavBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accent = ref.watch(themeProvider).accent;
-    final accentGradient = ref.watch(themeProvider).gradient;
+    final themeState = ref.watch(themeProvider);
+    final accent = themeState.variant.accent;
+    final accentGradient = themeState.variant.gradient;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

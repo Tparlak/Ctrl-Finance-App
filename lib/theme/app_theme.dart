@@ -1,84 +1,100 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
+import 'app_theme_tokens.dart';
 
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get darkTheme {
+  static ThemeData _buildTheme(AppThemeTokens tokens, Color accentColor) {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppColors.background,
-      colorScheme: const ColorScheme.dark(
-        surface: AppColors.surface,
-        primary: AppColors.gold,
-        secondary: AppColors.blue,
+      brightness: tokens.brightness,
+      scaffoldBackgroundColor: tokens.background,
+      colorScheme: ColorScheme(
+        brightness: tokens.brightness,
+        primary: accentColor,
+        onPrimary: tokens.background,
+        secondary: accentColor,
+        onSecondary: tokens.background,
         error: AppColors.red,
+        onError: Colors.white,
+        background: tokens.background,
+        onBackground: tokens.textPrimary,
+        surface: tokens.surface,
+        onSurface: tokens.textPrimary,
       ),
       textTheme: GoogleFonts.poppinsTextTheme(
-        const TextTheme(
-          displayLarge: TextStyle(color: AppColors.textPrimary),
-          displayMedium: TextStyle(color: AppColors.textPrimary),
-          displaySmall: TextStyle(color: AppColors.textPrimary),
-          headlineLarge: TextStyle(color: AppColors.textPrimary),
-          headlineMedium: TextStyle(color: AppColors.textPrimary),
-          headlineSmall: TextStyle(color: AppColors.textPrimary),
-          titleLarge: TextStyle(color: AppColors.textPrimary),
-          titleMedium: TextStyle(color: AppColors.textPrimary),
-          titleSmall: TextStyle(color: AppColors.textPrimary),
-          bodyLarge: TextStyle(color: AppColors.textPrimary),
-          bodyMedium: TextStyle(color: AppColors.textSecondary),
-          bodySmall: TextStyle(color: AppColors.textSecondary),
-          labelLarge: TextStyle(color: AppColors.textPrimary),
+        TextTheme(
+          displayLarge: TextStyle(color: tokens.textPrimary),
+          displayMedium: TextStyle(color: tokens.textPrimary),
+          displaySmall: TextStyle(color: tokens.textPrimary),
+          headlineLarge: TextStyle(color: tokens.textPrimary),
+          headlineMedium: TextStyle(color: tokens.textPrimary),
+          headlineSmall: TextStyle(color: tokens.textPrimary),
+          titleLarge: TextStyle(color: tokens.textPrimary),
+          titleMedium: TextStyle(color: tokens.textPrimary),
+          titleSmall: TextStyle(color: tokens.textPrimary),
+          bodyLarge: TextStyle(color: tokens.textPrimary),
+          bodyMedium: TextStyle(color: tokens.textSecondary),
+          bodySmall: TextStyle(color: tokens.textSecondary),
+          labelLarge: TextStyle(color: tokens.textPrimary),
         ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.background,
+        backgroundColor: tokens.background,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: GoogleFonts.poppins(
-          color: AppColors.textPrimary,
+          color: tokens.textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+        iconTheme: IconThemeData(color: tokens.textPrimary),
       ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: Colors.transparent,
-        selectedItemColor: AppColors.blue,
-        unselectedItemColor: AppColors.textSecondary,
+        selectedItemColor: accentColor,
+        unselectedItemColor: tokens.textSecondary,
         showSelectedLabels: true,
         showUnselectedLabels: true,
         elevation: 0,
         type: BottomNavigationBarType.fixed,
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.gold,
-        foregroundColor: AppColors.background,
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accentColor,
+        foregroundColor: tokens.background,
       ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.glassBorder,
+      dividerTheme: DividerThemeData(
+        color: tokens.glassBorder,
         thickness: 1,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.glassBg,
+        fillColor: tokens.glassBg,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.glassBorder),
+          borderSide: BorderSide(color: tokens.glassBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.glassBorder),
+          borderSide: BorderSide(color: tokens.glassBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.blue, width: 1.5),
+          borderSide: BorderSide(color: accentColor, width: 1.5),
         ),
-        labelStyle: const TextStyle(color: AppColors.textSecondary),
-        hintStyle: const TextStyle(color: AppColors.textSecondary),
+        labelStyle: TextStyle(color: tokens.textSecondary),
+        hintStyle: TextStyle(color: tokens.textSecondary),
       ),
     );
+  }
+
+  static ThemeData darkTheme(Color accentColor) {
+    return _buildTheme(AppThemeTokens.dark, accentColor);
+  }
+
+  static ThemeData lightTheme(Color accentColor) {
+    return _buildTheme(AppThemeTokens.light, accentColor);
   }
 }

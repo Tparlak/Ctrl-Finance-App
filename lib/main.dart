@@ -11,8 +11,10 @@ import 'screens/dashboard_screen.dart';
 import 'screens/accounts_screen.dart';
 import 'screens/fixed_expenses_screen.dart';
 import 'screens/ctrl_center_screen.dart';
+import 'screens/ctrl_center_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 import 'screens/onboarding_screen.dart';
+import 'providers/theme_provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -100,15 +102,20 @@ Future<void> main() async {
 // Root App
 // ─────────────────────────────────────────────────────────────────────────────
 
-class CtrlApp extends StatelessWidget {
+class CtrlApp extends ConsumerWidget {
   const CtrlApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeState = ref.watch(themeProvider);
+    final accent = themeState.variant.accent;
+
     return MaterialApp(
       title: 'Ctrl',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      themeMode: themeState.themeMode,
+      theme: AppTheme.lightTheme(accent),
+      darkTheme: AppTheme.darkTheme(accent),
       home: const _AppRoot(),
       builder: (context, child) => child!,
     );

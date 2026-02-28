@@ -77,23 +77,59 @@ extension AppThemeVariantExt on AppThemeVariant {
   String get key => name; // store as string in Hive
 }
 
-// ─── Theme Notifier ───────────────────────────────────────────────────────────
-class ThemeNotifier extends StateNotifier<AppThemeVariant> {
-  ThemeNotifier()
-      : super(() {
-          final saved = HiveBoxes.settings.get('appTheme', defaultValue: 'gold') as String;
-          return AppThemeVariant.values.firstWhere(
-            (e) => e.name == saved,
-            orElse: () => AppThemeVariant.gold,
-          );
-        }());
+// ─── Theme State ──────────────────────────────────────────────────────────────
+class ThemeState {
+  final AppThemeVariant variant;
+  final ThemeMode themeMode;
 
-  Future<void> setTheme(AppThemeVariant theme) async {
-    state = theme;
-    await HiveBoxes.settings.put('appTheme', theme.key);
+  ThemeState({
+    required this.variant,
+    this.themeMode = ThemeMode.system,
+  });
+
+  ThemeState copyWith({
+    AppThemeVariant? variant,
+    ThemeMode? themeMode,
+  }) {
+    return ThemeState(
+      variant: variant ?? this.variant,
+      themeMode: themeMode ?? this.themeMode,
+    );
   }
 }
 
-final themeProvider = StateNotifierProvider<ThemeNotifier, AppThemeVariant>(
+// ─── Theme Notifier ───────────────────────────────────────────────────────────
+class ThemeNotifier extends StateNotifier<ThemeState> {
+  ThemeNotifier() : super(_loadInitialState());
+
+  static ThemeState _loadInitialState() {
+    final savedVariantStr = HiveBoxes.settings.get('appTheme', defaultValue: 'gold') as String;
+    final savedModeStr = HiveBoxes.settings.get('themeMode', defaultValue: 'system') as String;
+
+    final variant = AppThemeVariant.values.firstWhere(
+      (e) => e.name == savedVariantStr,
+      orElse: () => AppThemeVariant.gold,
+    );
+
+    final mode = ThemeMode.values.firstWhere(
+      (e) => e.name == savedModeStr,
+      orElse: () => ThemeMode.system,
+    );
+
+    return ThemeState(variant: variant, themeMode: mode);
+  }
+
+  Future<void> setVariant(AppThemeVariant newVariant) async {
+    state = state.copyWith(variant: newVariant);
+    await HiveBoxes.settings.put('appTheme', newVariant.name);
+  }
+
+  Future<void> setMode(ThemeMode newMode) async {
+    state = state.copyWith(themeMode: newMode);
+    await HiveBoxes.settings.put('themeMode', newMode.name);
+  }
+}
+
+final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeState>(
   (ref) => ThemeNotifier(),
 );

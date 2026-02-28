@@ -21,7 +21,7 @@ class CtrlCenterScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTheme = ref.watch(themeProvider);
+    final themeState = ref.watch(themeProvider);
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: CustomScrollView(
@@ -156,7 +156,7 @@ class CtrlCenterScreen extends ConsumerWidget {
                   icon: Icons.palette_rounded,
                   title: 'GÖRÜNÜM',
                   subtitle: 'Renk ve Tema Seçimi',
-                  accent: currentTheme.accent,
+                  accent: themeState.variant.accent,
                   onTap: () => _showThemeDialog(context, ref),
                 ),
                 _CtrlTile(
@@ -347,65 +347,96 @@ class CtrlCenterScreen extends ConsumerWidget {
   }
 
   Future<void> _showThemeDialog(BuildContext context, WidgetRef ref) async {
-    final current = ref.read(themeProvider);
+    final currentState = ref.read(themeProvider);
+    ThemeMode curMode = currentState.themeMode;
+    AppThemeVariant curVariant = currentState.variant;
+
     await showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Tema Seç', style: GoogleFonts.poppins(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+        title: Text('Görünüm Seç', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w700)),
         content: StatefulBuilder(builder: (ctx, setS) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: AppThemeVariant.values.map((theme) {
-              final selected = current == theme;
-              return GestureDetector(
-                onTap: () async {
-                  await ref.read(themeProvider.notifier).setTheme(theme);
-                  if (ctx.mounted) Navigator.pop(ctx);
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: selected ? theme.accent.withValues(alpha: 0.15) : AppColors.glassBg,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: selected ? theme.accent : AppColors.glassBorder,
-                      width: selected ? 1.5 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          gradient: theme.gradient,
-                          shape: BoxShape.circle,
+          return SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Tema Arka Planı', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                SegmentedButton<ThemeMode>(
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment(value: ThemeMode.system, label: Text('Sistem', style: TextStyle(fontSize: 12))),
+                    ButtonSegment(value: ThemeMode.light, label: Text('Açık', style: TextStyle(fontSize: 12))),
+                    ButtonSegment(value: ThemeMode.dark, label: Text('Koyu', style: TextStyle(fontSize: 12))),
+                  ],
+                  selected: {curMode},
+                  onSelectionChanged: (Set<ThemeMode> newSelection) async {
+                    curMode = newSelection.first;
+                    await ref.read(themeProvider.notifier).setMode(curMode);
+                    setS(() {});
+                  },
+                ),
+                const SizedBox(height: 24),
+                Text('Vurgu Rengi', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                ...AppThemeVariant.values.map((theme) {
+                  final selected = curVariant == theme;
+                  final themeBg = Theme.of(context).inputDecorationTheme.fillColor ?? Colors.transparent;
+                  final themeBorder = Theme.of(context).dividerTheme.color ?? Colors.transparent;
+
+                  return GestureDetector(
+                    onTap: () async {
+                      curVariant = theme;
+                      await ref.read(themeProvider.notifier).setVariant(curVariant);
+                      setS(() {});
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: selected ? theme.accent.withValues(alpha: 0.15) : themeBg,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: selected ? theme.accent : themeBorder,
+                          width: selected ? 1.5 : 1,
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Text(theme.label,
-                            style: GoogleFonts.poppins(
-                              color: selected ? theme.accent : AppColors.textPrimary,
-                              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                            )),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              gradient: theme.gradient,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(theme.label,
+                                style: GoogleFonts.poppins(
+                                  color: selected ? theme.accent : Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                                )),
+                          ),
+                          if (selected)
+                            Icon(Icons.check_circle_rounded, color: theme.accent, size: 20),
+                        ],
                       ),
-                      if (selected)
-                        Icon(Icons.check_circle_rounded, color: theme.accent, size: 20),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
+                    ),
+                  );
+                }),
+              ],
+            ),
           );
         }),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('KAPAT', style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+            child: Text('KAPAT', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
           ),
         ],
       ),
