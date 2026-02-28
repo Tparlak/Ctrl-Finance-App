@@ -23,13 +23,14 @@ class AccountAdapter extends TypeAdapter<Account> {
       type: fields[3] == null ? 'BANK' : fields[3] as String,
       isIncludedInTotal: fields[4] == null ? true : fields[4] as bool,
       creditLimit: fields[5] == null ? 0.0 : fields[5] as double,
+      currency: fields[6] == null ? '₺' : fields[6] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, Account obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class AccountAdapter extends TypeAdapter<Account> {
       ..writeByte(4)
       ..write(obj.isIncludedInTotal)
       ..writeByte(5)
-      ..write(obj.creditLimit);
+      ..write(obj.creditLimit)
+      ..writeByte(6)
+      ..write(obj.currency);
   }
 
   @override

@@ -26,6 +26,7 @@ class AccountNotifier extends StateNotifier<List<Account>> {
     String type = 'BANK',
     bool isIncludedInTotal = true,
     double creditLimit = 0.0,
+    String currency = '₺',
   }) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     final account = Account(
@@ -35,6 +36,7 @@ class AccountNotifier extends StateNotifier<List<Account>> {
       type: type,
       isIncludedInTotal: isIncludedInTotal,
       creditLimit: creditLimit,
+      currency: currency,
     );
     await HiveBoxes.accounts.put(account.id, account);
     refresh();
@@ -86,10 +88,14 @@ final accountProvider =
     StateNotifierProvider<AccountNotifier, List<Account>>(
         (_) => AccountNotifier());
 
-/// Computed: sum of all account balances
-final totalBalanceProvider = Provider<double>((ref) {
+/// Computed: balances grouped by currency
+final balancesByCurrencyProvider = Provider<Map<String, double>>((ref) {
   final accounts = ref.watch(accountProvider);
-  return accounts
-      .where((a) => a.isIncludedInTotal)
-      .fold(0.0, (sum, a) => sum + a.currentBalance);
+  final map = <String, double>{};
+  for (final a in accounts) {
+    if (a.isIncludedInTotal) {
+      map[a.currency] = (map[a.currency] ?? 0.0) + a.currentBalance;
+    }
+  }
+  return map;
 });

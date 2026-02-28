@@ -22,6 +22,9 @@ class Account extends HiveObject {
   @HiveField(5, defaultValue: 0.0)
   double creditLimit;
 
+  @HiveField(6, defaultValue: '₺')
+  String currency;
+
   Account({
     required this.id,
     required this.name,
@@ -29,5 +32,6 @@ class Account extends HiveObject {
     this.type = 'BANK',
     this.isIncludedInTotal = true,
     this.creditLimit = 0.0,
+    this.currency = '₺',
   });
 }

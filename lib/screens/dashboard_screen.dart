@@ -17,7 +17,7 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final totalBalance = ref.watch(totalBalanceProvider);
+    final balances = ref.watch(balancesByCurrencyProvider);
     // Summary cards: ALL-TIME totals
     final totalIncome = ref.watch(totalIncomeProvider);
     final totalExpense = ref.watch(totalExpenseProvider);
@@ -50,15 +50,30 @@ class DashboardScreen extends ConsumerWidget {
                   ShaderMask(
                     shaderCallback: (bounds) =>
                         AppColors.goldGradient.createShader(bounds),
-                    child: Text(
-                      currencyFmt.format(totalBalance),
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 44,
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
-                      ),
-                    ),
+                    child: balances.isEmpty || balances.length == 1
+                        ? Text(
+                            balances.isEmpty ? '0,00 ₺' : '${NumberFormat('#,##0.00', 'tr_TR').format(balances.values.first)} ${balances.keys.first}',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 44,
+                              fontWeight: FontWeight.w800,
+                              height: 1.1,
+                            ),
+                            textAlign: TextAlign.center,
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: balances.entries.map((e) => Text(
+                              '${NumberFormat('#,##0.00', 'tr_TR').format(e.value)} ${e.key}',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                height: 1.2,
+                              ),
+                              textAlign: TextAlign.center,
+                            )).toList(),
+                          ),
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -306,6 +321,7 @@ class _TransactionTile extends StatelessWidget {
     final cat = categories.where((c) => c.id == tx.categoryId).firstOrNull;
     final account =
         accounts.where((a) => a.id == tx.fromAccountId).firstOrNull;
+    final String currencySymbol = account?.currency ?? '₺';
 
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -358,7 +374,7 @@ class _TransactionTile extends StatelessWidget {
             ),
           ),
           Text(
-            '$prefix${currencyFmt.format(tx.amount)}',
+            '$prefix ${NumberFormat('#,##0.00', 'tr_TR').format(tx.amount)} $currencySymbol',
             style: GoogleFonts.poppins(
               color: color,
               fontSize: 14,

@@ -109,6 +109,7 @@ class _AddAccountButton extends ConsumerWidget {
     final ctrl = TextEditingController();
     String selectedType = 'BANK';
     bool includedInTotal = true;
+    String selectedCurrency = '₺';
 
     showModalBottomSheet(
       context: context,
@@ -199,6 +200,28 @@ class _AddAccountButton extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    // Currency picker
+                    Text(
+                      'Para Birimi',
+                      style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: ['₺', '\$', '€', '₿', 'Gram'].map((c) => ChoiceChip(
+                        label: Text(c, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: selectedCurrency == c ? AppColors.gold : AppColors.textPrimary)),
+                        selected: selectedCurrency == c,
+                        selectedColor: AppColors.gold.withValues(alpha: 0.15),
+                        backgroundColor: AppColors.glassBg,
+                        showCheckmark: false,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(
+                          color: selectedCurrency == c ? AppColors.gold : AppColors.glassBorder,
+                        ),
+                        onSelected: (_) => setSheetState(() => selectedCurrency = c),
+                      )).toList(),
+                    ),
+                    const SizedBox(height: 16),
                     // Included in Total switch
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
@@ -240,6 +263,7 @@ class _AddAccountButton extends ConsumerWidget {
                                   name: name,
                                   type: selectedType,
                                   isIncludedInTotal: includedInTotal,
+                                  currency: selectedCurrency,
                                 );
                             Navigator.of(context).pop();
                           }
@@ -430,7 +454,7 @@ class _NormalView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  currencyFmt.format(account.currentBalance),
+                  '${NumberFormat('#,##0.00', 'tr_TR').format(account.currentBalance)} ${account.currency}',
                   style: GoogleFonts.poppins(
                     color: isPositive ? AppColors.green : AppColors.red,
                     fontSize: 17,
@@ -619,7 +643,7 @@ class AccountDetailScreen extends ConsumerWidget {
                       shaderCallback: (b) =>
                           AppColors.goldGradient.createShader(b),
                       child: Text(
-                        currencyFmt.format(account.currentBalance),
+                        '${NumberFormat('#,##0.00', 'tr_TR').format(account.currentBalance)} ${account.currency}',
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 32,
@@ -680,6 +704,10 @@ class _TxTile extends StatelessWidget {
             : AppColors.red;
     final prefix = isIncome ? '+' : isTransfer ? '⇄' : '-';
 
+    final account =
+        accounts.where((a) => a.id == tx.fromAccountId).firstOrNull;
+    final String currencySymbol = account?.currency ?? '₺';
+
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
@@ -722,7 +750,7 @@ class _TxTile extends StatelessWidget {
             ),
           ),
           Text(
-            '$prefix${currencyFmt.format(tx.amount)}',
+            '$prefix ${NumberFormat('#,##0.00', 'tr_TR').format(tx.amount)} $currencySymbol',
             style: GoogleFonts.poppins(
                 color: color, fontSize: 14, fontWeight: FontWeight.w700),
           ),
