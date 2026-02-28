@@ -86,14 +86,22 @@ class HiveBoxes {
         categories.values.any((c) => c.type == 'expense');
     if (!hasExpenseCats) {
       final expenseSeeds = [
-        {'name': 'Market',  'icon': Icons.shopping_cart.codePoint},
-        {'name': 'Sigara',  'icon': Icons.smoking_rooms.codePoint},
-        {'name': 'Yakıt',   'icon': Icons.local_gas_station.codePoint},
-        {'name': 'Fatura',  'icon': Icons.receipt_long.codePoint},
-        {'name': 'Yemek',   'icon': Icons.restaurant.codePoint},
-        {'name': 'Sağlık',  'icon': Icons.local_hospital.codePoint},
-        {'name': 'Ulaşım',  'icon': Icons.directions_bus.codePoint},
-        {'name': 'Diğer',   'icon': Icons.more_horiz.codePoint},
+        {'name': 'Fatura', 'icon': Icons.receipt_long.codePoint, 'color': '#FF6584', 'parent': null},
+        {'name': 'Elektrik', 'icon': Icons.bolt.codePoint, 'color': null, 'parent': 'Fatura'},
+        {'name': 'Su', 'icon': Icons.water_drop.codePoint, 'color': null, 'parent': 'Fatura'},
+        {'name': 'Doğalgaz', 'icon': Icons.local_fire_department.codePoint, 'color': null, 'parent': 'Fatura'},
+        {'name': 'İnternet', 'icon': Icons.wifi.codePoint, 'color': null, 'parent': 'Fatura'},
+        {'name': 'Telefon', 'icon': Icons.phone_android.codePoint, 'color': null, 'parent': 'Fatura'},
+
+        {'name': 'Ulaşım', 'icon': Icons.directions_car.codePoint, 'color': '#43E97B', 'parent': null},
+        {'name': 'Akaryakıt', 'icon': Icons.local_gas_station.codePoint, 'color': null, 'parent': 'Ulaşım'},
+        {'name': 'Otobüs/Metro', 'icon': Icons.directions_bus.codePoint, 'color': null, 'parent': 'Ulaşım'},
+        {'name': 'Taksi', 'icon': Icons.local_taxi.codePoint, 'color': null, 'parent': 'Ulaşım'},
+
+        {'name': 'Market', 'icon': Icons.shopping_cart.codePoint, 'color': '#FA8231', 'parent': null},
+        {'name': 'Gıda', 'icon': Icons.restaurant.codePoint, 'color': null, 'parent': 'Market'},
+        {'name': 'Temizlik', 'icon': Icons.cleaning_services.codePoint, 'color': null, 'parent': 'Market'},
+        {'name': 'Kişisel Bakım', 'icon': Icons.face.codePoint, 'color': null, 'parent': 'Market'},
       ];
       for (final s in expenseSeeds) {
         final cat = CategoryModel(
@@ -101,6 +109,8 @@ class HiveBoxes {
           name: s['name'] as String,
           iconCodePoint: s['icon'] as int,
           type: 'expense',
+          color: s['color'] as String?,
+          parentCategory: s['parent'] as String?,
         );
         await categories.put(cat.id, cat);
       }

@@ -17,10 +17,20 @@ class CategoryModel extends HiveObject {
   @HiveField(3, defaultValue: 'expense')
   String type;
 
+  /// Optional parent category ID for nested structures
+  @HiveField(4)
+  String? parentCategory;
+
+  /// Optional hex color code (e.g. '#FF6584')
+  @HiveField(5)
+  String? color;
+
   CategoryModel({
     required this.id,
     required this.name,
     required this.iconCodePoint,
     this.type = 'expense',
+    this.parentCategory,
+    this.color,
   });
 }

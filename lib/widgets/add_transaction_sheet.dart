@@ -9,6 +9,7 @@ import '../providers/category_provider.dart';
 import '../widgets/glass_card.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/services/ocr_service.dart';
+import '../widgets/category_picker.dart';
 
 void showAddTransactionSheet(BuildContext context) {
   showModalBottomSheet(
@@ -304,59 +305,48 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
               ],
               if (_tab != 2) ...[
                 const SizedBox(height: 12),
-                // Category horizontal scroll
-                SizedBox(
-                  height: 70,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: categories.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (_, i) {
-                      final cat = categories[i];
-                      final selected = _selectedCategoryId == cat.id;
-                      return GestureDetector(
-                        onTap: () => setState(
-                            () => _selectedCategoryId = selected ? null : cat.id),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 64,
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? _actionColor.withValues(alpha: 0.2)
-                                : AppColors.glassBg,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: selected ? _actionColor : AppColors.glassBorder,
+                // Category Selector
+                GestureDetector(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: AppColors.background,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                      ),
+                      builder: (_) => CategoryPicker(
+                        type: _txType,
+                        onSelected: (cat) {
+                          setState(() => _selectedCategoryId = cat.id);
+                        },
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.glassBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.glassBorder),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.category_outlined, color: _actionColor, size: 18),
+                            const SizedBox(width: 12),
+                            Text(
+                              _selectedCategoryId == null 
+                                ? 'Kategori Seç' 
+                                : categories.firstWhere((c) => c.id == _selectedCategoryId, orElse: () => categories.first).name,
+                              style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 14),
                             ),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                IconData(cat.iconCodePoint,
-                                    fontFamily: 'MaterialIcons'),
-                                color: selected
-                                    ? _actionColor
-                                    : AppColors.textSecondary,
-                                size: 22,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                cat.name,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 9,
-                                  color: selected
-                                      ? _actionColor
-                                      : AppColors.textSecondary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
-                      );
-                    },
+                        Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 20),
+                      ],
+                    ),
                   ),
                 ),
               ],
