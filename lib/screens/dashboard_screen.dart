@@ -10,7 +10,8 @@ import '../providers/category_provider.dart';
 import '../models/transaction_model.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/add_transaction_sheet.dart';
-
+import '../providers/analytics_provider.dart';
+import '../widgets/monthly_pie_chart.dart';
 
 
 class DashboardScreen extends ConsumerWidget {
@@ -101,6 +102,25 @@ class DashboardScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 28),
+                  const SizedBox(height: 12),
+                  // ===== PIE CHART =====
+                  Text(
+                    'Aylık Kategori Dağılımı',
+                    style: GoogleFonts.poppins(
+                      color: AppColors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final pieData = ref.watch(analyticsProvider);
+                      return MonthlyPieChart(data: pieData);
+                    },
+                  ),
+                  const SizedBox(height: 28),
+                  // =====================
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
