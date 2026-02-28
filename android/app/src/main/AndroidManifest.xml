@@ -54,10 +54,6 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/ctrl_widget_info" />
         </receiver>
-                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
-                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
-            </intent-filter>
-        </receiver>
     </application>
 
     <!-- ── Queries ───────────────────────────────────────────────────────── -->

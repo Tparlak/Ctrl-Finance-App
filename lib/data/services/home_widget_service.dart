@@ -1,8 +1,8 @@
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
-import '../models/account.dart';
-import '../models/transaction_model.dart';
-import '../data/hive_boxes.dart';
+import '../../models/account.dart';
+import '../../models/transaction_model.dart';
+import '../hive_boxes.dart';
 
 class HomeWidgetService {
   static const String _groupId = 'com.vip.vip_finance'; // same as namespace
@@ -19,7 +19,7 @@ class HomeWidgetService {
       final balances = <String, double>{};
       for (final a in iterAccounts) {
         final c = a.currency;
-        balances[c] = (balances[c] ?? 0) + a.balance;
+        balances[c] = (balances[c] ?? 0) + a.currentBalance;
       }
       
       String balanceStr = '₺0,00';
