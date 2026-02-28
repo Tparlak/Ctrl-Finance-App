@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../models/transaction_model.dart';
 import '../data/hive_boxes.dart';
 import 'account_provider.dart';
+import '../data/services/home_widget_service.dart';
 
 const _uuid = Uuid();
 
@@ -61,6 +62,7 @@ class TransactionNotifier extends StateNotifier<List<TransactionModel>> {
     }
 
     refresh();
+    HomeWidgetService.syncWidgetData();
   }
 
   List<TransactionModel> forAccount(String accountId) {

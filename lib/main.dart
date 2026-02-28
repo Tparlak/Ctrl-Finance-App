@@ -19,6 +19,7 @@ import 'providers/fixed_expense_provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/services/notification_service.dart';
+import 'data/services/home_widget_service.dart';
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,10 @@ Future<void> main() async {
 
     // ─── Notifications ─────────────────────────────────────────────────────────
     await NotificationService.init();
+
+    // ─── Home Widgets ──────────────────────────────────────────────────────────
+    await HomeWidgetService.init();
+    await HomeWidgetService.syncWidgetData();
   } catch (e) {
     runApp(
       MaterialApp(

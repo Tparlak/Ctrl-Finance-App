@@ -4,6 +4,7 @@ import '../models/fixed_expense.dart';
 import '../data/hive_boxes.dart';
 import 'account_provider.dart';
 import '../data/services/notification_service.dart';
+import '../data/services/home_widget_service.dart';
 
 const _uuid = Uuid();
 
@@ -110,6 +111,7 @@ class FixedExpenseNotifier extends StateNotifier<List<FixedExpense>> {
     // Deduct from account
     await ref.read(accountProvider.notifier).updateBalance(accountId, -expense.amount);
     _refresh();
+    HomeWidgetService.syncWidgetData();
   }
 
   Future<void> checkUpcomingPayments() async {

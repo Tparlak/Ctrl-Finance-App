@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/account.dart';
 import '../data/hive_boxes.dart';
+import '../data/services/home_widget_service.dart';
 
 class AccountNotifier extends StateNotifier<List<Account>> {
   AccountNotifier() : super(_loadAll());
@@ -19,6 +20,7 @@ class AccountNotifier extends StateNotifier<List<Account>> {
     account.currentBalance += delta;
     await account.save();
     refresh();
+    HomeWidgetService.syncWidgetData();
   }
 
   Future<void> addAccount({
@@ -40,6 +42,7 @@ class AccountNotifier extends StateNotifier<List<Account>> {
     );
     await HiveBoxes.accounts.put(account.id, account);
     refresh();
+    HomeWidgetService.syncWidgetData();
   }
 
   Future<void> deleteAccount(String accountId) async {
@@ -64,6 +67,7 @@ class AccountNotifier extends StateNotifier<List<Account>> {
     // ── Delete the account itself ─────────────────────────────────────────────
     await HiveBoxes.accounts.delete(accountId);
     refresh();
+    HomeWidgetService.syncWidgetData();
   }
 
   Future<void> updateAccountSettings(
@@ -81,6 +85,7 @@ class AccountNotifier extends StateNotifier<List<Account>> {
     if (creditLimit != null) account.creditLimit = creditLimit;
     await account.save();
     refresh();
+    HomeWidgetService.syncWidgetData();
   }
 }
 
