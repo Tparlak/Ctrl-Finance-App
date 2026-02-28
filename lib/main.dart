@@ -15,8 +15,10 @@ import 'screens/ctrl_center_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 import 'screens/onboarding_screen.dart';
 import 'providers/theme_provider.dart';
+import 'providers/fixed_expense_provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'data/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +47,9 @@ Future<void> main() async {
 
     // ─── Locale (Turkish date/number formatting) ───────────────────────────────
     await initializeDateFormatting('tr_TR', null);
+
+    // ─── Notifications ─────────────────────────────────────────────────────────
+    await NotificationService.init();
   } catch (e) {
     runApp(
       MaterialApp(
@@ -122,13 +127,13 @@ class CtrlApp extends ConsumerWidget {
   }
 }
 
-class _AppRoot extends StatefulWidget {
+class _AppRoot extends ConsumerStatefulWidget {
   const _AppRoot();
   @override
-  State<_AppRoot> createState() => _AppRootState();
+  ConsumerState<_AppRoot> createState() => _AppRootState();
 }
 
-class _AppRootState extends State<_AppRoot> {
+class _AppRootState extends ConsumerState<_AppRoot> {
   late Future<bool> _onboardingDoneFuture;
 
   @override
@@ -136,6 +141,10 @@ class _AppRootState extends State<_AppRoot> {
     super.initState();
     _onboardingDoneFuture = SharedPreferences.getInstance()
         .then((prefs) => prefs.getBool('isOnboardingDone') ?? false);
+        
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(fixedExpenseProvider.notifier).checkUpcomingPayments();
+    });
   }
 
   @override

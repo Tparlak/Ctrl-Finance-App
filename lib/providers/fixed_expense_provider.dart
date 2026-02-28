@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../models/fixed_expense.dart';
 import '../data/hive_boxes.dart';
 import 'account_provider.dart';
+import '../data/services/notification_service.dart';
 
 const _uuid = Uuid();
 
@@ -109,6 +110,27 @@ class FixedExpenseNotifier extends StateNotifier<List<FixedExpense>> {
     // Deduct from account
     await ref.read(accountProvider.notifier).updateBalance(accountId, -expense.amount);
     _refresh();
+  }
+
+  Future<void> checkUpcomingPayments() async {
+    final now = DateTime.now();
+    final notified = <int>{};
+
+    for (final expense in state.where((e) => !e.isPaid)) {
+      final dueDate = DateTime(now.year, now.month, expense.dueDate.day);
+      final diff = dueDate.difference(DateTime(now.year, now.month, now.day)).inDays;
+
+      if ((diff == 1 || diff == 2 || diff == 0) && !notified.contains(expense.id.hashCode)) {
+        notified.add(expense.id.hashCode);
+        await NotificationService.showUpcomingPaymentNotification(
+          id: expense.id.hashCode,
+          billName: expense.title,
+          amount: expense.amount,
+          currency: '₺',
+          daysUntilDue: diff,
+        );
+      }
+    }
   }
 }
 
