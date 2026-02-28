@@ -7,6 +7,8 @@ import '../providers/account_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../providers/category_provider.dart';
 import '../widgets/glass_card.dart';
+import 'package:image_picker/image_picker.dart';
+import '../data/services/ocr_service.dart';
 
 void showAddTransactionSheet(BuildContext context) {
   showModalBottomSheet(
@@ -35,6 +37,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
   String? _fromAccountId;
   String? _toAccountId;
   String? _selectedCategoryId;
+
+  String? _receiptImagePath;
+  final _ocrService = OcrService();
+  bool _isScanning = false;
 
   // 0=income, 1=expense, 2=transfer
   int get _tab => _tabController.index;
@@ -67,7 +73,34 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
     _tabController.dispose();
     _amountController.dispose();
     _descController.dispose();
+    _ocrService.dispose();
     super.dispose();
+  }
+
+  Future<void> _scanReceipt() async {
+    final picker = ImagePicker();
+    final photo = await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
+    if (photo == null) return;
+
+    setState(() => _isScanning = true);
+    try {
+      final result = await _ocrService.scanReceipt(photo.path);
+      setState(() {
+        _receiptImagePath = photo.path;
+        if (result.amount != null) _amountController.text = result.amount!.toStringAsFixed(2).replaceAll('.', ',');
+        if (result.description != null && _descController.text.isEmpty) {
+          _descController.text = result.description!;
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fiş okunamadı: $e')),
+        );
+      }
+    } finally {
+      setState(() => _isScanning = false);
+    }
   }
 
   String get _actionLabel {
@@ -132,6 +165,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
           categoryId: _selectedCategoryId,
           description: _descController.text.trim(),
           date: _selectedDate,
+          receiptImagePath: _receiptImagePath,
         );
 
     if (mounted) Navigator.of(context).pop();
@@ -339,36 +373,59 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
               ),
               const SizedBox(height: 20),
               // Amount
-              TextField(
-                controller: _amountController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                style: GoogleFonts.poppins(
-                  color: _actionColor,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
-                decoration: InputDecoration(
-                  labelText: 'TUTAR (₺)',
-                  labelStyle: GoogleFonts.poppins(
-                      color: AppColors.textSecondary, fontSize: 13),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: _actionColor, width: 1.5),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _amountController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      style: GoogleFonts.poppins(
+                        color: _actionColor,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      textAlign: TextAlign.center,
+                      decoration: InputDecoration(
+                        labelText: 'TUTAR',
+                        labelStyle: GoogleFonts.poppins(
+                            color: AppColors.textSecondary, fontSize: 13),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: _actionColor, width: 1.5),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              BorderSide(color: _actionColor.withValues(alpha: 0.4)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: _actionColor, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: _actionColor.withValues(alpha: 0.05),
+                      ),
+                    ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        BorderSide(color: _actionColor.withValues(alpha: 0.4)),
+                  const SizedBox(width: 8),
+                  Container(
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: AppColors.glassBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.glassBorder),
+                    ),
+                    child: IconButton(
+                      icon: _isScanning 
+                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.gold))
+                        : const Icon(Icons.document_scanner_outlined, color: AppColors.gold),
+                      tooltip: 'Fiş Tara',
+                      onPressed: _isScanning ? null : _scanReceipt,
+                    ),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: _actionColor, width: 2),
-                  ),
-                  filled: true,
-                  fillColor: _actionColor.withValues(alpha: 0.05),
-                ),
+                ],
               ),
               const SizedBox(height: 24),
               // Action button

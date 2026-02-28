@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -350,6 +351,19 @@ class _TransactionTile extends StatelessWidget {
                     size: 20,
                   ),
           ),
+          if (tx.receiptImagePath != null) ...[
+            const SizedBox(width: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.file(
+                File(tx.receiptImagePath!),
+                width: 36,
+                height: 36,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 20, color: AppColors.textSecondary),
+              ),
+            ),
+          ],
           const SizedBox(width: 12),
           Expanded(
             child: Column(

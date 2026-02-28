@@ -31,6 +31,7 @@ class TransactionNotifier extends StateNotifier<List<TransactionModel>> {
     String? categoryId,
     required String description,
     required DateTime date,
+    String? receiptImagePath,
   }) async {
     final tx = TransactionModel(
       id: _uuid.v4(),
@@ -41,6 +42,7 @@ class TransactionNotifier extends StateNotifier<List<TransactionModel>> {
       categoryId: categoryId,
       description: description,
       date: date,
+      receiptImagePath: receiptImagePath,
     );
 
     await HiveBoxes.transactions.put(tx.id, tx);

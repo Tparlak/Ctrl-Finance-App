@@ -29,6 +29,9 @@ class TransactionModel extends HiveObject {
   @HiveField(7)
   DateTime date;
 
+  @HiveField(8)
+  String? receiptImagePath;
+
   TransactionModel({
     required this.id,
     required this.amount,
@@ -38,5 +41,6 @@ class TransactionModel extends HiveObject {
     this.categoryId,
     required this.description,
     required this.date,
+    this.receiptImagePath,
   });
 }
