@@ -222,7 +222,7 @@ class CtrlCenterScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Versiyon 2.0.0',
+                      'Versiyon 3.0.0',
                       style: GoogleFonts.poppins(
                           color: AppColors.textSecondary, fontSize: 12),
                     ),

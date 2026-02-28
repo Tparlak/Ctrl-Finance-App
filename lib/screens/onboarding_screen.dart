@@ -155,68 +155,77 @@ class _SlideWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 200),
-      child: Column(
-        children: [
-          Expanded(
-            child: Stack(
-              children: [
-                // Image in transparent glass card with BoxFit.cover
-                Container(
-                  width: double.infinity,
+    final screenH = MediaQuery.of(context).size.height;
+    final imgHeight = screenH * 0.42;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // ── Image card ─────────────────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                height: imgHeight,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(
+                    color: slide.accent.withValues(alpha: 0.35),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: slide.accent.withValues(alpha: 0.20),
+                      blurRadius: 40,
+                      offset: const Offset(0, 16),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: Image.asset(
+                    slide.image,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: imgHeight,
+                  ),
+                ),
+              ),
+              // Gradient fade from image bottom → background
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: imgHeight * 0.35,
+                child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(
-                      color: slide.accent.withValues(alpha: 0.35),
-                      width: 1.5,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: slide.accent.withValues(alpha: 0.18),
-                        blurRadius: 40,
-                        offset: const Offset(0, 16),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(30),
-                    child: Image.asset(
-                      slide.image,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        AppColors.background,
+                      ],
                     ),
                   ),
                 ),
-                // Seamless bottom gradient fade into background color
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: 100,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(30),
-                        bottomRight: Radius.circular(30),
-                      ),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          AppColors.background,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          Text(
+        ),
+
+        // ── Text block — sits directly below the image ─────────────────────────
+        const SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Text(
             slide.title,
             style: GoogleFonts.poppins(
               color: Colors.white,
@@ -225,17 +234,22 @@ class _SlideWidget extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
-          Text(
+        ),
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Text(
             slide.subtitle,
             style: GoogleFonts.poppins(
-                color: Colors.white.withValues(alpha: 0.55),
-                fontSize: 14,
-                height: 1.6),
+              color: Colors.white.withValues(alpha: 0.55),
+              fontSize: 14,
+              height: 1.6,
+            ),
             textAlign: TextAlign.center,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
+
