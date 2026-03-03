@@ -19,10 +19,49 @@ class AccountsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final accounts = ref.watch(accountProvider);
 
+    // ── Net Durum hesaplama ──────────────────────────────────────────────────
+    double totalAssets = 0;
+    double totalDebts = 0;
+    for (final a in accounts) {
+      if (a.type == 'CREDIT_CARD') {
+        totalDebts += a.currentBalance.abs();
+      } else {
+        totalAssets += a.currentBalance;
+      }
+    }
+    final netWorth = totalAssets - totalDebts;
+    final assetRatio =
+        (totalAssets + totalDebts) > 0 ? totalAssets / (totalAssets + totalDebts) : 1.0;
+
+    // ── Gruplandırma ─────────────────────────────────────────────────────────
+    final cash = accounts.where((a) => a.type == 'CASH').toList();
+    final banks = accounts
+        .where((a) => a.type == 'BANK' || a.type == 'SAVINGS')
+        .toList();
+    final cards =
+        accounts.where((a) => a.type == 'CREDIT_CARD').toList();
+
+    // Flat sliver items list: type = 'header' | 'account' | 'addBtn'
+    final List<Map<String, dynamic>> items = [];
+
+    void addGroup(String label, Color color, List group) {
+      if (group.isEmpty) return;
+      items.add({'type': 'header', 'label': label, 'color': color});
+      for (final a in group) {
+        items.add({'type': 'account', 'account': a});
+      }
+    }
+
+    addGroup('NAKİT', AppColors.green, cash);
+    addGroup('BANKA HESAPLARI', AppColors.blue, banks);
+    addGroup('KREDİ KARTLARI', AppColors.red, cards);
+    items.add({'type': 'addBtn'});
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: CustomScrollView(
         slivers: [
+          // ── Başlık ─────────────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 60, 20, 16),
@@ -47,33 +86,222 @@ class AccountsScreen extends ConsumerWidget {
               ),
             ),
           ),
+
+          // ── Net Durum Glassmorphism Kartı ──────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: GlassCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'NET DURUM',
+                      style: GoogleFonts.poppins(
+                        color: AppColors.textSecondary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        // ── Mini bar ────────────────────────────────────────
+                        SizedBox(
+                          width: 12,
+                          height: 80,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Stack(
+                              alignment: Alignment.bottomCenter,
+                              children: [
+                                // Background (debt)
+                                Container(
+                                  color:
+                                      AppColors.red.withValues(alpha: 0.25),
+                                ),
+                                // Asset portion
+                                FractionallySizedBox(
+                                  heightFactor: assetRatio.clamp(0.0, 1.0),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: AppColors.greenGradient,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        // ── Sayılar ─────────────────────────────────────────
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _NetRow(
+                                label: 'Varlıklar',
+                                amount: totalAssets,
+                                color: AppColors.green,
+                                icon: Icons.account_balance_rounded,
+                              ),
+                              const SizedBox(height: 8),
+                              _NetRow(
+                                label: 'Borçlar',
+                                amount: -totalDebts,
+                                color: AppColors.red,
+                                icon: Icons.credit_card_rounded,
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8),
+                                child: Divider(
+                                    color: AppColors.glassBorder, height: 1),
+                              ),
+                              _NetRow(
+                                label: 'Net Durum',
+                                amount: netWorth,
+                                color: AppColors.gold,
+                                icon: Icons.auto_graph_rounded,
+                                large: true,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ── Gruplu Hesap Listesi ───────────────────────────────────────────
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (_, i) {
-                  final account = accounts[i];
+                  final item = items[i];
+
+                  if (item['type'] == 'header') {
+                    return _GroupHeader(
+                      label: item['label'] as String,
+                      color: item['color'] as Color,
+                    );
+                  }
+
+                  if (item['type'] == 'addBtn') {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 24),
+                      child: _AddAccountButton(),
+                    );
+                  }
+
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: _AccountCard(account: account),
+                    child: _AccountCard(account: item['account'] as Account),
                   );
                 },
-                childCount: accounts.length,
+                childCount: items.length,
               ),
             ),
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-              child: _AddAccountButton(),
-            ),
-          ),
+
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
     );
   }
 }
+
+// ─── Group Header ──────────────────────────────────────────────────────────
+
+class _GroupHeader extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _GroupHeader({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, top: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 16,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Net Row ───────────────────────────────────────────────────────────────
+
+class _NetRow extends StatelessWidget {
+  final String label;
+  final double amount;
+  final Color color;
+  final IconData icon;
+  final bool large;
+
+  const _NetRow({
+    required this.label,
+    required this.amount,
+    required this.color,
+    required this.icon,
+    this.large = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fmtAbs =
+        NumberFormat('#,##0.00', 'tr_TR').format(amount.abs());
+    final sign = amount < 0 ? '-' : '';
+    return Row(
+      children: [
+        Icon(icon, color: color, size: large ? 16 : 14),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              color: AppColors.textSecondary,
+              fontSize: large ? 12 : 11,
+            ),
+          ),
+        ),
+        Text(
+          '$sign$fmtAbs ₺',
+          style: GoogleFonts.poppins(
+            color: color,
+            fontSize: large ? 14 : 12,
+            fontWeight: large ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+
 
 // ─── Add Account Button (Inline) ───────────────────────────────────────────
 

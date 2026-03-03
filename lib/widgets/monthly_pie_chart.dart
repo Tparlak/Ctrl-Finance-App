@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../providers/analytics_provider.dart';
 import '../theme/app_colors.dart';
 
@@ -23,6 +24,9 @@ class _MonthlyPieChartState extends State<MonthlyPieChart> {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final monthName = DateFormat('MMMM', 'tr_TR').format(now).toUpperCase();
+
     if (widget.data.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(24.0),
@@ -38,45 +42,100 @@ class _MonthlyPieChartState extends State<MonthlyPieChart> {
     return Column(
       children: [
         SizedBox(
-          height: 220,
-          child: PieChart(
-            PieChartData(
-              pieTouchData: PieTouchData(
-                touchCallback: (event, response) {
-                  setState(() {
-                    if (!event.isInterestedForInteractions ||
-                        response == null ||
-                        response.touchedSection == null) {
-                      _touchedIndex = -1;
-                      return;
-                    }
-                    _touchedIndex = response.touchedSection!.touchedSectionIndex;
-                  });
-                },
-              ),
-              sectionsSpace: 4,
-              centerSpaceRadius: 50,
-              sections: widget.data.asMap().entries.map((entry) {
-                final isTouched = entry.key == _touchedIndex;
-                final radius = isTouched ? 60.0 : 50.0;
-                final fontSize = isTouched ? 14.0 : 12.0;
-
-                return PieChartSectionData(
-                  color: _colors[entry.key % _colors.length],
-                  value: entry.value.total,
-                  title: '${entry.value.percentage.toStringAsFixed(1)}%',
-                  radius: radius,
-                  titleStyle: GoogleFonts.poppins(
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: [
-                      const Shadow(color: Colors.black45, blurRadius: 2)
-                    ],
+          height: 240,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              PieChart(
+                PieChartData(
+                  pieTouchData: PieTouchData(
+                    touchCallback: (event, response) {
+                      setState(() {
+                        if (!event.isInterestedForInteractions ||
+                            response == null ||
+                            response.touchedSection == null) {
+                          _touchedIndex = -1;
+                          return;
+                        }
+                        _touchedIndex =
+                            response.touchedSection!.touchedSectionIndex;
+                      });
+                    },
                   ),
-                );
-              }).toList(),
-            ),
+                  sectionsSpace: 3,
+                  centerSpaceRadius: 72,
+                  sections: widget.data.asMap().entries.map((entry) {
+                    final isTouched = entry.key == _touchedIndex;
+                    final radius = isTouched ? 58.0 : 48.0;
+                    final pct = entry.value.percentage;
+
+                    return PieChartSectionData(
+                      color: _colors[entry.key % _colors.length],
+                      value: entry.value.total,
+                      title: pct >= 5 ? '${pct.toStringAsFixed(0)}%' : '',
+                      radius: radius,
+                      titleStyle: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        shadows: const [
+                          Shadow(color: Colors.black45, blurRadius: 3)
+                        ],
+                      ),
+                      titlePositionPercentageOffset: 1.5,
+                      badgeWidget: pct < 5
+                          ? null
+                          : null,
+                    );
+                  }).toList(),
+                ),
+              ),
+              // Center text
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    monthName,
+                    style: GoogleFonts.poppins(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  Text(
+                    'GİDERİ',
+                    style: GoogleFonts.poppins(
+                      color: AppColors.gold,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  if (_touchedIndex >= 0 &&
+                      _touchedIndex < widget.data.length) ...[
+                    Text(
+                      widget.data[_touchedIndex].categoryName,
+                      style: GoogleFonts.poppins(
+                        color: _colors[_touchedIndex % _colors.length],
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      '${widget.data[_touchedIndex].percentage.toStringAsFixed(1)}%',
+                      style: GoogleFonts.poppins(
+                        color: AppColors.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -86,26 +145,52 @@ class _MonthlyPieChartState extends State<MonthlyPieChart> {
           runSpacing: 8,
           alignment: WrapAlignment.center,
           children: widget.data.asMap().entries.map((e) {
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: _colors[e.key % _colors.length],
-                    shape: BoxShape.circle,
+            final color = _colors[e.key % _colors.length];
+            return GestureDetector(
+              onTap: () => setState(() {
+                _touchedIndex = _touchedIndex == e.key ? -1 : e.key;
+              }),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: _touchedIndex == e.key
+                      ? color.withValues(alpha: 0.18)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: _touchedIndex == e.key
+                        ? color.withValues(alpha: 0.6)
+                        : Colors.transparent,
                   ),
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  e.value.categoryName,
-                  style: GoogleFonts.poppins(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      e.value.categoryName,
+                      style: GoogleFonts.poppins(
+                        color: _touchedIndex == e.key
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: _touchedIndex == e.key
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             );
           }).toList(),
         ),
