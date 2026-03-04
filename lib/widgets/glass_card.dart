@@ -49,8 +49,8 @@ class GlassCard extends StatelessWidget {
                 [
                   BoxShadow(
                     color: isDark 
-                      ? Colors.black.withValues(alpha: 0.25)
-                      : Colors.black.withValues(alpha: 0.05),
+                      ? Colors.black.withOpacity( 0.25)
+                      : Colors.black.withOpacity( 0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -62,3 +62,4 @@ class GlassCard extends StatelessWidget {
     );
   }
 }
+

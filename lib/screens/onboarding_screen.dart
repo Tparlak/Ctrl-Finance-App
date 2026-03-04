@@ -88,7 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         width: active ? 24 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: active ? accent : AppColors.textSecondary.withValues(alpha: 0.4),
+                          color: active ? accent : AppColors.textSecondary.withOpacity( 0.4),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       );
@@ -173,12 +173,12 @@ class _SlideWidget extends StatelessWidget {
                   color: Colors.transparent,
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                    color: slide.accent.withValues(alpha: 0.35),
+                    color: slide.accent.withOpacity( 0.35),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: slide.accent.withValues(alpha: 0.20),
+                      color: slide.accent.withOpacity( 0.20),
                       blurRadius: 40,
                       offset: const Offset(0, 16),
                     ),
@@ -241,7 +241,7 @@ class _SlideWidget extends StatelessWidget {
           child: Text(
             slide.subtitle,
             style: GoogleFonts.poppins(
-              color: Colors.white.withValues(alpha: 0.55),
+              color: Colors.white.withOpacity( 0.55),
               fontSize: 14,
               height: 1.6,
             ),
@@ -252,4 +252,5 @@ class _SlideWidget extends StatelessWidget {
     );
   }
 }
+
 

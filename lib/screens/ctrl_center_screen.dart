@@ -46,7 +46,7 @@ class CtrlCenterScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.gold.withValues(alpha: 0.4),
+                              color: AppColors.gold.withOpacity( 0.4),
                               blurRadius: 16,
                               offset: const Offset(0, 4),
                             ),
@@ -90,10 +90,10 @@ class CtrlCenterScreen extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.gold.withValues(alpha: 0.15),
+                          color: AppColors.gold.withOpacity( 0.15),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                              color: AppColors.gold.withValues(alpha: 0.4)),
+                              color: AppColors.gold.withOpacity( 0.4)),
                         ),
                         child: Row(
                           children: [
@@ -419,7 +419,7 @@ class CtrlCenterScreen extends ConsumerWidget {
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: selected ? theme.accent.withValues(alpha: 0.15) : themeBg,
+                        color: selected ? theme.accent.withOpacity( 0.15) : themeBg,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: selected ? theme.accent : themeBorder,
@@ -458,7 +458,7 @@ class CtrlCenterScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('KAPAT', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
+            child: Text('KAPAT', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface.withOpacity( 0.7))),
           ),
         ],
       ),
@@ -547,7 +547,7 @@ class _CtrlTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: accent.withValues(alpha: 0.1),
+              color: accent.withOpacity( 0.1),
               blurRadius: 16,
               spreadRadius: 2,
             ),
@@ -562,7 +562,7 @@ class _CtrlTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.15),
+                  color: accent.withOpacity( 0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, color: accent, size: 24),
@@ -623,3 +623,4 @@ class VersionFooter extends StatelessWidget {
     );
   }
 }
+

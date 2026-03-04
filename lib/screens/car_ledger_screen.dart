@@ -130,7 +130,7 @@ class _CarLedgerScreenState extends ConsumerState<CarLedgerScreen> {
                           padding: const EdgeInsets.only(right: 20),
                           margin: const EdgeInsets.only(bottom: 10),
                           decoration: BoxDecoration(
-                            color: AppColors.red.withValues(alpha: 0.2),
+                            color: AppColors.red.withOpacity( 0.2),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: const Icon(Icons.delete_outline, color: AppColors.red),
@@ -149,7 +149,7 @@ class _CarLedgerScreenState extends ConsumerState<CarLedgerScreen> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AppColors.gold.withValues(alpha: 0.15),
+                                  color: AppColors.gold.withOpacity( 0.15),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Icon(_catIcon(e.category), color: AppColors.gold, size: 20),
@@ -164,7 +164,7 @@ class _CarLedgerScreenState extends ConsumerState<CarLedgerScreen> {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                                         decoration: BoxDecoration(
-                                          color: AppColors.blue.withValues(alpha: 0.15),
+                                          color: AppColors.blue.withOpacity( 0.15),
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Text(e.category, style: GoogleFonts.poppins(color: AppColors.blue, fontSize: 10)),
@@ -326,3 +326,4 @@ class _AddCarExpenseSheetState extends ConsumerState<_AddCarExpenseSheet> {
     );
   }
 }
+

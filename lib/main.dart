@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,7 +75,7 @@ Future<void> main() async {
                   const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 60),
                   const SizedBox(height: 16),
                   Text(
-                    'VeritabanÄ± AÃ§Ä±lÄ±ÅŸ HatasÄ±\n\n$e',
+                    'Veritabanı Açılış Hatası\n\n$e',
                     style: const TextStyle(color: Colors.redAccent, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
@@ -90,7 +90,7 @@ Future<void> main() async {
                       }
                     },
                     icon: const Icon(Icons.delete_forever, color: Colors.white),
-                    label: const Text('Verileri SÄ±fÄ±rla ve Ã‡Ä±k', style: TextStyle(color: Colors.white)),
+                    label: const Text('Verileri Sıfırla ve Çık', style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                   ),
                 ],
@@ -199,7 +199,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
           Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const HomeShell()));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('HatalÄ± PIN!'), backgroundColor: AppColors.red),
+            const SnackBar(content: Text('Hatalı PIN!'), backgroundColor: AppColors.red),
           );
           setState(() => _input = "");
         }
@@ -222,7 +222,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Spacer(),
-            Icon(Icons.lock_person_rounded, size: 60, color: AppColors.gold.withValues(alpha: 0.8)),
+            Icon(Icons.lock_person_rounded, size: 60, color: AppColors.gold.withOpacity( 0.8)),
             const SizedBox(height: 20),
             Text('CTRL SECURITY', style: GoogleFonts.poppins(color: AppColors.gold, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 4)),
             const SizedBox(height: 40),
@@ -285,7 +285,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
   }
 }
 
-// â”€â”€â”€ Home Shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Home Shell ────────────────────────────────────────────────────────────────
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
@@ -334,17 +334,17 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             Positioned(
               top: -120,
               left: -80,
-              child: _GlowOrb(size: 320, color: AppColors.gold.withValues(alpha: 0.06)),
+              child: _GlowOrb(size: 320, color: AppColors.gold.withOpacity( 0.06)),
             ),
             Positioned(
               bottom: 60,
               right: -100,
-              child: _GlowOrb(size: 260, color: AppColors.blue.withValues(alpha: 0.04)),
+              child: _GlowOrb(size: 260, color: AppColors.blue.withOpacity( 0.04)),
             ),
             Positioned(
               top: 300,
               right: -60,
-              child: _GlowOrb(size: 180, color: AppColors.green.withValues(alpha: 0.03)),
+              child: _GlowOrb(size: 180, color: AppColors.green.withOpacity( 0.03)),
             ),
             IndexedStack(
               index: currentIndex,
@@ -382,5 +382,6 @@ class _GlowOrb extends StatelessWidget {
     );
   }
 }
+
 
 

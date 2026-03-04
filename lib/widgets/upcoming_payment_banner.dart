@@ -50,7 +50,7 @@ class UpcomingPaymentBanner extends StatelessWidget {
                         ),
                         Text(
                           'Ödeme tarihi yaklaşan $count adet faturanız/taksitiniz var.',
-                          style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.9), fontSize: 12),
+                          style: GoogleFonts.poppins(color: Colors.white.withOpacity( 0.9), fontSize: 12),
                         ),
                       ],
                     ),
@@ -65,3 +65,4 @@ class UpcomingPaymentBanner extends StatelessWidget {
     );
   }
 }
+

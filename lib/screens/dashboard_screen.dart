@@ -147,9 +147,9 @@ class DashboardScreen extends ConsumerWidget {
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.06),
+                              color: Colors.white.withOpacity( 0.06),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                              border: Border.all(color: Colors.white.withOpacity( 0.1)),
                             ),
                             child: Text(
                               '${item.code}  $rateStr ₺',
@@ -301,7 +301,7 @@ class _SummaryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: glowColor.withValues(alpha: 0.12),
+            color: glowColor.withOpacity( 0.12),
             blurRadius: 16,
             spreadRadius: 2,
           ),
@@ -389,3 +389,4 @@ class _MonthFilterSelector extends ConsumerWidget {
     );
   }
 }
+

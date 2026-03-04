@@ -53,7 +53,7 @@ class FixedExpensesScreen extends ConsumerWidget {
                   IconButton(
                     onPressed: () => _showAddDialog(context, ref),
                     style: IconButton.styleFrom(
-                      backgroundColor: AppColors.gold.withValues(alpha: 0.15),
+                      backgroundColor: AppColors.gold.withOpacity( 0.15),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.all(12),
                     ),
@@ -286,8 +286,8 @@ class _FixedExpenseCard extends ConsumerWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: isPaid
-                      ? AppColors.green.withValues(alpha: 0.15)
-                      : AppColors.red.withValues(alpha: 0.15),
+                      ? AppColors.green.withOpacity( 0.15)
+                      : AppColors.red.withOpacity( 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -325,7 +325,7 @@ class _FixedExpenseCard extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.blue.withValues(alpha: 0.15),
+                              color: AppColors.blue.withOpacity( 0.15),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -422,7 +422,7 @@ class _FixedExpenseCard extends ConsumerWidget {
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: sel
-                        ? AppColors.gold.withValues(alpha: 0.15)
+                        ? AppColors.gold.withOpacity( 0.15)
                         : AppColors.glassBg,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
@@ -480,9 +480,9 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: color.withOpacity( 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withOpacity( 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -496,3 +496,4 @@ class _InfoChip extends StatelessWidget {
     );
   }
 }
+

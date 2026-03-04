@@ -125,7 +125,7 @@ class AccountsScreen extends ConsumerWidget {
                                 // Background (debt)
                                 Container(
                                   color:
-                                      AppColors.red.withValues(alpha: 0.25),
+                                      AppColors.red.withOpacity( 0.25),
                                 ),
                                 // Asset portion
                                 FractionallySizedBox(
@@ -338,8 +338,8 @@ class _AddAccountButton extends ConsumerWidget {
       onPressed: () => _showAddAccountSheet(context, ref),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        side: BorderSide(color: AppColors.gold.withValues(alpha: 0.6), width: 1.5),
-        backgroundColor: AppColors.gold.withValues(alpha: 0.1),
+        side: BorderSide(color: AppColors.gold.withOpacity( 0.6), width: 1.5),
+        backgroundColor: AppColors.gold.withOpacity( 0.1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       child: Row(
@@ -382,7 +382,7 @@ class _AddAccountButton extends ConsumerWidget {
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                      color: AppColors.gold.withValues(alpha: 0.3), width: 1),
+                      color: AppColors.gold.withOpacity( 0.3), width: 1),
                 ),
                 padding: const EdgeInsets.all(24),
                 child: Column(
@@ -409,7 +409,7 @@ class _AddAccountButton extends ConsumerWidget {
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                              color: AppColors.gold.withValues(alpha: 0.3)),
+                              color: AppColors.gold.withOpacity( 0.3)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -430,7 +430,7 @@ class _AddAccountButton extends ConsumerWidget {
                         color: AppColors.glassBg,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.gold.withValues(alpha: 0.3),
+                          color: AppColors.gold.withOpacity( 0.3),
                         ),
                       ),
                       child: DropdownButtonHideUnderline(
@@ -466,7 +466,7 @@ class _AddAccountButton extends ConsumerWidget {
                       children: ['₺', '\$', '€', '₿', 'Gram'].map((c) => ChoiceChip(
                         label: Text(c, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: selectedCurrency == c ? AppColors.gold : AppColors.textPrimary)),
                         selected: selectedCurrency == c,
-                        selectedColor: AppColors.gold.withValues(alpha: 0.15),
+                        selectedColor: AppColors.gold.withOpacity( 0.15),
                         backgroundColor: AppColors.glassBg,
                         showCheckmark: false,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -784,7 +784,7 @@ class _EditModeView extends StatelessWidget {
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
-                      color: AppColors.gold.withValues(alpha: 0.4)),
+                      color: AppColors.gold.withOpacity( 0.4)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -831,7 +831,7 @@ class _ActionBtn extends StatelessWidget {
         height: 38,
         margin: const EdgeInsets.only(left: 4),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
+          color: color.withOpacity( 0.15),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, color: color, size: 20),
@@ -998,7 +998,7 @@ class _TxTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
+              color: color.withOpacity( 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -1054,3 +1054,4 @@ class _TxTile extends StatelessWidget {
     );
   }
 }
+

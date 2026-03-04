@@ -56,7 +56,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(top: 80),
                 child: Column(children: [
-                  Icon(Icons.alarm_outlined, size: 64, color: AppColors.textSecondary.withValues(alpha: 0.4)),
+                  Icon(Icons.alarm_outlined, size: 64, color: AppColors.textSecondary.withOpacity( 0.4)),
                   const SizedBox(height: 12),
                   Text('Henüz hatırlatıcı yok', style: GoogleFonts.poppins(color: AppColors.textSecondary)),
                 ]),
@@ -103,7 +103,7 @@ class _ReminderTile extends ConsumerWidget {
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          color: AppColors.red.withValues(alpha: 0.2),
+          color: AppColors.red.withOpacity( 0.2),
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Icon(Icons.delete_outline, color: AppColors.red),
@@ -285,3 +285,4 @@ class _DateTile extends StatelessWidget {
     );
   }
 }
+

@@ -109,7 +109,7 @@ class _TimelineItem extends StatelessWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        color: AppColors.red.withValues(alpha: 0.15),
+        color: AppColors.red.withOpacity( 0.15),
         child: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
       ),
       onDismissed: (_) => onDelete?.call(transaction),
@@ -138,7 +138,7 @@ class _TimelineItem extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                            color: nodeColor.withValues(alpha: 0.5),
+                            color: nodeColor.withOpacity( 0.5),
                             blurRadius: 6)
                       ],
                     ),
@@ -202,7 +202,7 @@ class _TimelineItem extends StatelessWidget {
                             Text(
                               DateFormat('HH:mm', 'tr_TR').format(transaction.date),
                               style: GoogleFonts.poppins(
-                                color: AppColors.textSecondary.withValues(alpha: 0.6),
+                                color: AppColors.textSecondary.withOpacity( 0.6),
                                 fontSize: 10,
                               ),
                             ),
@@ -247,3 +247,4 @@ class _TimelineItem extends StatelessWidget {
     );
   }
 }
+

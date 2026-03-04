@@ -155,12 +155,12 @@ class _MonthlyPieChartState extends State<MonthlyPieChart> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: _touchedIndex == e.key
-                      ? color.withValues(alpha: 0.18)
+                      ? color.withOpacity( 0.18)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: _touchedIndex == e.key
-                        ? color.withValues(alpha: 0.6)
+                        ? color.withOpacity( 0.6)
                         : Colors.transparent,
                   ),
                 ),
@@ -198,3 +198,4 @@ class _MonthlyPieChartState extends State<MonthlyPieChart> {
     );
   }
 }
+

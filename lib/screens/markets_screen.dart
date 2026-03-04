@@ -99,7 +99,7 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
                   const SizedBox(height: 16),
                   Center(child: Text(
                     'Kur verileri: fawazahmed0/exchange-api & CoinGecko',
-                    style: GoogleFonts.poppins(color: AppColors.textSecondary.withValues(alpha: 0.5), fontSize: 10),
+                    style: GoogleFonts.poppins(color: AppColors.textSecondary.withOpacity( 0.5), fontSize: 10),
                     textAlign: TextAlign.center,
                   )),
                 ],
@@ -188,3 +188,4 @@ class _MarketRow extends StatelessWidget {
     );
   }
 }
+

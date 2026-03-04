@@ -8,7 +8,7 @@ class ReceiptImageViewer extends StatelessWidget {
   static void show(BuildContext context, String imagePath) {
     Navigator.push(context, PageRouteBuilder(
       opaque: false,
-      barrierColor: Colors.black.withValues(alpha: 0.95),
+      barrierColor: Colors.black.withOpacity( 0.95),
       pageBuilder: (_, __, ___) => ReceiptImageViewer(imagePath: imagePath),
       transitionsBuilder: (_, anim, __, child) =>
           FadeTransition(opacity: anim, child: child),
@@ -38,7 +38,7 @@ class ReceiptImageViewer extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: Colors.white.withOpacity( 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.close, color: Colors.white, size: 22),
@@ -52,3 +52,4 @@ class ReceiptImageViewer extends StatelessWidget {
     );
   }
 }
+

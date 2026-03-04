@@ -40,7 +40,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
           ? Center(child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.sticky_note_2_outlined, size: 64, color: AppColors.textSecondary.withValues(alpha: 0.5)),
+                Icon(Icons.sticky_note_2_outlined, size: 64, color: AppColors.textSecondary.withOpacity( 0.5)),
                 const SizedBox(height: 12),
                 Text('Henüz not yok', style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 14)),
               ],
@@ -108,7 +108,7 @@ class _NoteCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          border: Border.all(color: Colors.white.withOpacity( 0.08)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,7 +124,7 @@ class _NoteCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 note.content,
-                style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.75), fontSize: 12),
+                style: GoogleFonts.poppins(color: Colors.white.withOpacity( 0.75), fontSize: 12),
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -135,10 +135,10 @@ class _NoteCard extends StatelessWidget {
               children: [
                 Text(
                   DateFormat('dd MMM', 'tr_TR').format(note.dateModified),
-                  style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.5), fontSize: 10),
+                  style: GoogleFonts.poppins(color: Colors.white.withOpacity( 0.5), fontSize: 10),
                 ),
                 if (note.isPinned)
-                  Icon(Icons.push_pin_rounded, size: 14, color: Colors.white.withValues(alpha: 0.6)),
+                  Icon(Icons.push_pin_rounded, size: 14, color: Colors.white.withOpacity( 0.6)),
               ],
             ),
           ],
@@ -257,7 +257,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
                   controller: _contentC,
                   maxLines: null,
                   expands: true,
-                  style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.85), fontSize: 14),
+                  style: GoogleFonts.poppins(color: Colors.white.withOpacity( 0.85), fontSize: 14),
                   decoration: const InputDecoration(
                     hintText: 'Not al...',
                     hintStyle: TextStyle(color: Colors.white38),
@@ -297,3 +297,4 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
     );
   }
 }
+

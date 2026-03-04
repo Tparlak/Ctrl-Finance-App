@@ -23,8 +23,8 @@ class AppDrawer extends ConsumerWidget {
         child: Container(
           decoration: BoxDecoration(
             color: isDark
-                ? const Color(0xFF0B0C10).withValues(alpha: 0.95)
-                : Colors.white.withValues(alpha: 0.95),
+                ? const Color(0xFF0B0C10).withOpacity( 0.95)
+                : Colors.white.withOpacity( 0.95),
             border: Border(
               right: BorderSide(color: AppColors.glassBorder, width: 1),
             ),
@@ -168,9 +168,9 @@ class _DrawerHeader extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [accent.withValues(alpha: 0.3), AppColors.gold.withValues(alpha: 0.15)],
+                colors: [accent.withOpacity( 0.3), AppColors.gold.withOpacity( 0.15)],
               ),
-              border: Border.all(color: accent.withValues(alpha: 0.5), width: 1.5),
+              border: Border.all(color: accent.withOpacity( 0.5), width: 1.5),
             ),
             child: Icon(Icons.person_rounded, color: accent, size: 28),
           ),
@@ -194,7 +194,7 @@ class _DrawerHeader extends StatelessWidget {
                     gradient: AppColors.goldGradient,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
-                      BoxShadow(color: AppColors.gold.withValues(alpha: 0.4), blurRadius: 8),
+                      BoxShadow(color: AppColors.gold.withOpacity( 0.4), blurRadius: 8),
                     ],
                   ),
                   child: Text(
@@ -247,3 +247,4 @@ class _DrawerTile extends StatelessWidget {
     );
   }
 }
+

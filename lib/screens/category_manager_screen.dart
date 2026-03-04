@@ -214,7 +214,7 @@ class _SubCategoryTile extends ConsumerWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        color: AppColors.red.withValues(alpha: 0.1),
+        color: AppColors.red.withOpacity( 0.1),
         child: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
       ),
       onDismissed: (_) {
@@ -260,7 +260,7 @@ class _CategoryIcon extends StatelessWidget {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: AppColors.gold.withValues(alpha: 0.15),
+        color: AppColors.gold.withOpacity( 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Center(
@@ -295,8 +295,8 @@ class _AddButton extends ConsumerWidget {
       },
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 14),
-        side: BorderSide(color: AppColors.gold.withValues(alpha: 0.4), width: 1.5),
-        backgroundColor: AppColors.gold.withValues(alpha: 0.08),
+        side: BorderSide(color: AppColors.gold.withOpacity( 0.4), width: 1.5),
+        backgroundColor: AppColors.gold.withOpacity( 0.08),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       child: Text(label,
@@ -371,7 +371,7 @@ class _CategorySheetState extends State<_CategorySheet> {
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
+            border: Border.all(color: AppColors.gold.withOpacity( 0.3)),
           ),
           padding: const EdgeInsets.all(24),
           child: SingleChildScrollView(
@@ -422,7 +422,7 @@ class _CategorySheetState extends State<_CategorySheet> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.gold.withValues(alpha: 0.2) : AppColors.glassBg,
+                          color: selected ? AppColors.gold.withOpacity( 0.2) : AppColors.glassBg,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: selected ? AppColors.gold : AppColors.glassBorder,
@@ -501,3 +501,4 @@ class _CategorySheetState extends State<_CategorySheet> {
     );
   }
 }
+

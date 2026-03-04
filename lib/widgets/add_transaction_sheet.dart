@@ -339,14 +339,14 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide:
-                        BorderSide(color: _actionColor.withValues(alpha: 0.4)),
+                        BorderSide(color: _actionColor.withOpacity( 0.4)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: _actionColor, width: 2),
                   ),
                   filled: true,
-                  fillColor: _actionColor.withValues(alpha: 0.05),
+                  fillColor: _actionColor.withOpacity( 0.05),
                 ),
               ),
             ),
@@ -444,7 +444,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                 child: TabBar(
                   controller: _tabController,
                   indicator: BoxDecoration(
-                    color: _actionColor.withValues(alpha: 0.2),
+                    color: _actionColor.withOpacity( 0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   labelColor: _actionColor,
@@ -629,7 +629,7 @@ class _AccountSelector extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                    color: selected
-                      ? AppColors.gold.withValues(alpha: 0.15)
+                      ? AppColors.gold.withOpacity( 0.15)
                       : AppColors.glassBg,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
@@ -654,3 +654,4 @@ class _AccountSelector extends StatelessWidget {
     );
   }
 }
+
