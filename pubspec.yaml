@@ -19,7 +19,7 @@ dependencies:
   uuid: ^4.4.0
   flutter_native_splash: ^2.4.7
   url_launcher: ^6.3.0
-  shared_preferences: ^2.5.4
+  shared_preferences: ^2.3.5
   # v3.0 — Analytics
   fl_chart: ^0.68.0
   # v3.0 — Home Screen Widget
