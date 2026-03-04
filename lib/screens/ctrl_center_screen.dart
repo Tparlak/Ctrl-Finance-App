@@ -16,7 +16,7 @@ import '../providers/transaction_provider.dart';
 import '../providers/category_provider.dart';
 import '../providers/fixed_expense_provider.dart';
 import 'category_manager_screen.dart';
-
+import '../widgets/app_drawer.dart';
 
 class CtrlCenterScreen extends ConsumerWidget {
   const CtrlCenterScreen({super.key});
@@ -27,6 +27,7 @@ class CtrlCenterScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBodyBehindAppBar: true,
+      drawer: const AppDrawer(),
       body: Stack(
         children: [
           SingleChildScrollView(

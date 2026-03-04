@@ -60,23 +60,33 @@ class OcrService {
 
   // ── DATE ─────────────────────────────────────────────
   static DateTime? _extractDate(String text) {
-    final r = RegExp(r'(?:TARIH|TARİH|DATE)?[\s:]*(\d{2})[./-](\d{2})[./-](\d{4})', caseSensitive: false);
-    final m = r.firstMatch(text);
-    if (m == null) return null;
-    try {
-      return DateTime(int.parse(m.group(3)!), int.parse(m.group(2)!), int.parse(m.group(1)!));
-    } catch (_) { return null; }
+    final r = RegExp(r'(?:TARIH|TARİH|DATE)?[^\w\d]*(\d{2})[./-](\d{2})[./-](\d{2,4})', caseSensitive: false);
+    for (final m in r.allMatches(text)) {
+      try {
+        final day = int.parse(m.group(1)!);
+        final month = int.parse(m.group(2)!);
+        int year = int.parse(m.group(3)!);
+        if (year < 100) year += 2000;
+        
+        if (day > 0 && day <= 31 && month > 0 && month <= 12) {
+          return DateTime(year, month, day);
+        }
+      } catch (_) {}
+    }
+    return null;
   }
 
   // ── TIME ─────────────────────────────────────────────
   static TimeOfDay? _extractTime(String text) {
-    final r = RegExp(r'(?:SAAT|TIME)?[\s:]*(\d{2}):(\d{2})', caseSensitive: false);
-    final m = r.firstMatch(text);
-    if (m == null) return null;
-    final h = int.tryParse(m.group(1)!);
-    final min = int.tryParse(m.group(2)!);
-    if (h == null || min == null || h > 23 || min > 59) return null;
-    return TimeOfDay(hour: h, minute: min);
+    final r = RegExp(r'(?:SAAT|TIME)?[^\w\d]*(\d{2})[:.](\d{2})', caseSensitive: false);
+    for (final m in r.allMatches(text)) {
+      final h = int.tryParse(m.group(1)!);
+      final min = int.tryParse(m.group(2)!);
+      if (h != null && min != null && h <= 23 && min <= 59) {
+        return TimeOfDay(hour: h, minute: min);
+      }
+    }
+    return null;
   }
 
   // ── MERCHANT ─────────────────────────────────────────

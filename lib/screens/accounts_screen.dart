@@ -14,8 +14,7 @@ import '../utils/transaction_grouper.dart';
 import '../widgets/add_transaction_sheet.dart';
 import '../models/category_model.dart';
 import '../providers/category_provider.dart';
-
-
+import '../widgets/app_drawer.dart';
 
 class AccountsScreen extends ConsumerWidget {
   const AccountsScreen({super.key});
@@ -65,6 +64,7 @@ class AccountsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBodyBehindAppBar: true,
+      drawer: const AppDrawer(),
       body: Stack(
         children: [
           CustomScrollView(
@@ -245,29 +245,10 @@ class AccountsScreen extends ConsumerWidget {
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
-      // Menu Button
-      Positioned(
-        top: 10,
-        left: 10,
-        child: SafeArea(
-          child: Builder(
-            builder: (ctx) => IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.glassBg,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.glassBorder),
-                ),
-                child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
-              ),
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
-          ),
-        ),
-      ),
+
     ],
-  );
+  ),
+);
 }
 }
 
@@ -753,28 +734,7 @@ class _NormalView extends StatelessWidget {
             ),
           ],
         ),
-        // Menu Button
-        Positioned(
-          top: 10,
-          left: 10,
-          child: SafeArea(
-            child: Builder(
-              builder: (ctx) => IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.glassBg,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.glassBorder),
-                  ),
-                  child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
-                    ),
-                    onPressed: () => Scaffold.of(ctx).openDrawer(),
-                  ),
-                ),
-              ),
-            ),
-          ],
+
         ),
       ),
     );

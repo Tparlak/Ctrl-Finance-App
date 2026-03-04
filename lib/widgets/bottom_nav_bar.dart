@@ -31,9 +31,9 @@ class VipBottomNavBar extends ConsumerWidget {
           child: Container(
             height: 64,
             decoration: BoxDecoration(
-              color: const Color(0xCC0B0C10),
+              color: Theme.of(context).colorScheme.surface.withOpacity(0.8),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.glassBorder),
+              border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.1)),
             ),
             child: Row(
               children: [
