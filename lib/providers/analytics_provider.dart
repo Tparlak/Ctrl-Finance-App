@@ -21,22 +21,17 @@ class AnalyticsNotifier extends StateNotifier<List<CategoryTotal>> {
   final Ref ref;
 
   AnalyticsNotifier(this.ref) : super([]) {
-    // Whenever transactions or categories change, recalculate
-    ref.listen(transactionProvider, (_, __) => _calculate());
+    // Whenever filtered transactions or categories change, recalculate
+    ref.listen(filteredTransactionsProvider, (_, __) => _calculate());
     ref.listen(expenseCategoryProvider, (_, __) => _calculate());
     _calculate();
   }
 
   void _calculate() {
-    final transactions = ref.read(transactionProvider);
+    final transactions = ref.read(filteredTransactionsProvider);
     final categories = ref.read(expenseCategoryProvider);
     
-    final now = DateTime.now();
-    final monthly = transactions.where((t) =>
-      t.type == 'expense' &&
-      t.date.year == now.year &&
-      t.date.month == now.month
-    ).toList();
+    final monthly = transactions.where((t) => t.type == 'expense').toList();
 
     final grouped = <String, double>{};
     for (final t in monthly) {

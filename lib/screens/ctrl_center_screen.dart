@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,15 +17,16 @@ import '../providers/category_provider.dart';
 import '../providers/fixed_expense_provider.dart';
 import 'category_manager_screen.dart';
 
+
 class CtrlCenterScreen extends ConsumerWidget {
   const CtrlCenterScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeState = ref.watch(themeProvider);
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: CustomScrollView(
+    return Stack(
+      children: [
+        CustomScrollView(
         slivers: [
           // ── Header ──────────────────────────────────────────────────────────
           SliverToBoxAdapter(
@@ -246,7 +248,6 @@ class CtrlCenterScreen extends ConsumerWidget {
                               color: AppColors.textSecondary,
                               fontSize: 11,
                               decoration: TextDecoration.underline,
-                              decorationColor: AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -257,11 +258,32 @@ class CtrlCenterScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
-    );
-  }
+      // Menu Button
+      Positioned(
+        top: 10,
+        left: 10,
+        child: SafeArea(
+          child: Builder(
+            builder: (ctx) => IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.glassBg,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.glassBorder),
+                ),
+                child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
+              ),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
+}
 
   void _showComingSoon(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -569,6 +591,35 @@ class _CtrlTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─── Version Footer ────────────────────────────────────────────────────────
+
+class VersionFooter extends StatelessWidget {
+  const VersionFooter({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PackageInfo>(
+      future: PackageInfo.fromPlatform(),
+      builder: (ctx, snap) {
+        final version = snap.data?.version ?? '5.0.0';
+        final build = snap.data?.buildNumber ?? '50';
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16, top: 8),
+          child: Center(
+            child: Text(
+              'Ctrl Finance v$version ($build)',
+              style: GoogleFonts.poppins(
+                color: Colors.grey.shade600,
+                fontSize: 11,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

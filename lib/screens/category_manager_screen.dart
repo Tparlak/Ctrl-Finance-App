@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../theme/app_colors.dart';
 import '../providers/category_provider.dart';
 import '../models/category_model.dart';
@@ -9,13 +10,6 @@ import '../data/hive_boxes.dart';
 import 'package:uuid/uuid.dart';
 
 const _uuid = Uuid();
-
-// Quick emoji icon set for categories
-const _emojiOptions = [
-  '🛒', '🚗', '🍕', '💊', '💡', '🏠', '✈️', '🎮', '👗', '📱',
-  '💰', '🎓', '💼', '🎁', '🏥', '🚌', '⛽', '🚬', '📈', '💳',
-  '🎯', '🎵', '🌟', '🏋️', '🍺', '☕', '🌿', '🐾', '🔧', '📦',
-];
 
 // Map emoji to icon codepoint via a simple list widget
 const _defaultIconCode = 0xe59c; // shopping cart
@@ -26,8 +20,8 @@ class CategoryManagerScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final allCats = ref.watch(categoryProvider);
-    final income = allCats.where((c) => c.type == 'income').toList();
-    final expense = allCats.where((c) => c.type == 'expense').toList();
+    final topLevelIncome = allCats.where((c) => c.type == 'income' && c.parentCategory == null).toList();
+    final topLevelExpense = allCats.where((c) => c.type == 'expense' && c.parentCategory == null).toList();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -37,7 +31,7 @@ class CategoryManagerScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 60, 20, 16),
               child: Text(
-                'KATEGORİLER',
+                'KATEGORİ YÖNETİMİ',
                 style: GoogleFonts.poppins(
                   color: AppColors.textPrimary,
                   fontSize: 22,
@@ -47,24 +41,24 @@ class CategoryManagerScreen extends ConsumerWidget {
               ),
             ),
           ),
-          _SectionHeader(label: '📈 GELİR KATEGORİLERİ'),
-          _CategoryList(cats: income, ref: ref),
+          _SectionHeader(label: '📈 GELİR SİSTEMİ'),
+          _HierarchicalCategoryList(topLevel: topLevelIncome, type: 'income'),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: _AddButton(
-                label: '+ Gelir Kategorisi Ekle',
+                label: '+ Yeni Gelir Grubu',
                 type: 'income',
               ),
             ),
           ),
-          _SectionHeader(label: '💸 GİDER KATEGORİLERİ'),
-          _CategoryList(cats: expense, ref: ref),
+          _SectionHeader(label: '💸 GİDER SİSTEMİ'),
+          _HierarchicalCategoryList(topLevel: topLevelExpense, type: 'expense'),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: _AddButton(
-                label: '+ Gider Kategorisi Ekle',
+                label: '+ Yeni Gider Grubu',
                 type: 'expense',
               ),
             ),
@@ -99,122 +93,182 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _CategoryList extends StatelessWidget {
-  final List<CategoryModel> cats;
-  final WidgetRef ref;
-  const _CategoryList({required this.cats, required this.ref});
+class _HierarchicalCategoryList extends ConsumerWidget {
+  final List<CategoryModel> topLevel;
+  final String type;
+  const _HierarchicalCategoryList({required this.topLevel, required this.type});
 
   @override
-  Widget build(BuildContext context) {
-    if (cats.isEmpty) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (topLevel.isEmpty) {
       return SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-          child: Text('Henüz kategori yok.',
+          child: Text('Henüz grup yok.',
               style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13)),
         ),
       );
     }
+
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
-          (_, i) => Dismissible(
-            key: Key(cats[i].id),
-            direction: DismissDirection.endToStart,
-            background: Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              decoration: BoxDecoration(
-                color: AppColors.red.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.only(right: 20),
-              child: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
-            ),
-            confirmDismiss: (_) async {
-              return await showDialog<bool>(
-                context: context,
-                builder: (_) => AlertDialog(
-                  backgroundColor: AppColors.surface,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  title: Text('Kategoriyi Sil?',
-                      style: GoogleFonts.poppins(color: AppColors.textPrimary)),
-                  content: Text('"${cats[i].name}" silinecek.',
-                      style: GoogleFonts.poppins(color: AppColors.textSecondary)),
-                  actions: [
-                    TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: Text('VAZGEÇ', style: GoogleFonts.poppins(color: AppColors.textSecondary))),
-                    ElevatedButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.red, foregroundColor: Colors.white),
-                        child: Text('SİL', style: GoogleFonts.poppins(fontWeight: FontWeight.w700))),
-                  ],
-                ),
-              );
-            },
-            onDismissed: (_) {
-              HiveBoxes.categories.delete(cats[i].id);
-              ref.invalidate(categoryProvider);
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+          (_, i) {
+            final cat = topLevel[i];
+            final subCats = ref.watch(subCategoriesProvider(cat.id));
+            
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
               child: GlassCard(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.gold.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          IconData(cats[i].iconCodePoint, fontFamily: 'MaterialIcons'),
-                          color: AppColors.gold,
-                          size: 22,
+                padding: EdgeInsets.zero,
+                child: Theme(
+                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    leading: _CategoryIcon(codePoint: cat.iconCodePoint),
+                    title: Text(cat.name,
+                        style: GoogleFonts.poppins(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                    subtitle: cat.monthlyLimit != null 
+                        ? Text('Limit: ${NumberFormat('#,##0', 'tr_TR').format(cat.monthlyLimit)} ₺',
+                            style: GoogleFonts.poppins(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.w600))
+                        : null,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 20),
+                          onPressed: () => _showEditSheet(context, cat, ref),
+                        ),
+                        const Icon(Icons.expand_more_rounded, color: AppColors.textSecondary),
+                      ],
+                    ),
+                    children: [
+                      ...subCats.map((sub) => _SubCategoryTile(sub: sub)),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(56, 4, 16, 12),
+                        child: InkWell(
+                          onTap: () => _showAddSubSheet(context, cat, ref),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.add_circle_outline_rounded, color: AppColors.gold, size: 18),
+                                const SizedBox(width: 8),
+                                Text('Alt Kategori Ekle', 
+                                  style: GoogleFonts.poppins(color: AppColors.gold, fontSize: 12, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(cats[i].name,
-                          style: GoogleFonts.poppins(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 20),
-                      onPressed: () => _showEditSheet(context, cats[i], ref),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ),
-          childCount: cats.length,
+            );
+          },
+          childCount: topLevel.length,
         ),
       ),
     );
   }
 
   void _showEditSheet(BuildContext context, CategoryModel cat, WidgetRef ref) {
-    final ctrl = TextEditingController(text: cat.name);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _CategorySheet(
-        title: 'Kategoriyi Düzenle',
-        nameCtrl: ctrl,
-        initialIconCode: cat.iconCodePoint,
-        onSave: (newName, iconCode) async {
-          cat.name = newName;
-          cat.iconCodePoint = iconCode;
-          await cat.save();
-          ref.invalidate(categoryProvider);
-        },
+        title: 'Grubu Düzenle',
+        existingCategory: cat,
+        type: cat.type,
+      ),
+    ).then((_) => ref.invalidate(categoryProvider));
+  }
+
+  void _showAddSubSheet(BuildContext context, CategoryModel parent, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CategorySheet(
+        title: 'Alt Kategori Ekle',
+        parentId: parent.id,
+        type: parent.type,
+      ),
+    ).then((_) => ref.invalidate(categoryProvider));
+  }
+}
+
+class _SubCategoryTile extends ConsumerWidget {
+  final CategoryModel sub;
+  const _SubCategoryTile({required this.sub});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Dismissible(
+      key: Key(sub.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        color: AppColors.red.withValues(alpha: 0.1),
+        child: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
+      ),
+      onDismissed: (_) {
+        HiveBoxes.categories.delete(sub.id);
+        ref.invalidate(categoryProvider);
+      },
+      child: ListTile(
+        contentPadding: const EdgeInsets.only(left: 64, right: 16),
+        leading: Icon(IconData(sub.iconCodePoint, fontFamily: 'MaterialIcons'), 
+          color: AppColors.textSecondary, size: 18),
+        title: Text(sub.name, style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 13)),
+        subtitle: sub.monthlyLimit != null 
+            ? Text('Limit: ${NumberFormat('#,##0', 'tr_TR').format(sub.monthlyLimit)} ₺',
+                style: GoogleFonts.poppins(color: AppColors.gold, fontSize: 10))
+            : null,
+        trailing: IconButton(
+          icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 16),
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => _CategorySheet(
+                title: 'Alt Kategoriyi Düzenle',
+                existingCategory: sub,
+                type: sub.type,
+              ),
+            ).then((_) => ref.invalidate(categoryProvider));
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryIcon extends StatelessWidget {
+  final int codePoint;
+  const _CategoryIcon({required this.codePoint});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: AppColors.gold.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Icon(
+          IconData(codePoint, fontFamily: 'MaterialIcons'),
+          color: AppColors.gold,
+          size: 20,
+        ),
       ),
     );
   }
@@ -228,10 +282,20 @@ class _AddButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return OutlinedButton(
-      onPressed: () => _showAddSheet(context, ref),
+      onPressed: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => _CategorySheet(
+            title: label,
+            type: type,
+          ),
+        ).then((_) => ref.invalidate(categoryProvider));
+      },
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 14),
-        side: BorderSide(color: AppColors.gold.withValues(alpha: 0.5), width: 1.5),
+        side: BorderSide(color: AppColors.gold.withValues(alpha: 0.4), width: 1.5),
         backgroundColor: AppColors.gold.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
@@ -239,43 +303,19 @@ class _AddButton extends ConsumerWidget {
           style: GoogleFonts.poppins(color: AppColors.gold, fontWeight: FontWeight.w600)),
     );
   }
-
-  void _showAddSheet(BuildContext context, WidgetRef ref) {
-    final ctrl = TextEditingController();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _CategorySheet(
-        title: type == 'income' ? 'Gelir Kategorisi Ekle' : 'Gider Kategorisi Ekle',
-        nameCtrl: ctrl,
-        initialIconCode: _defaultIconCode,
-        onSave: (name, iconCode) async {
-          final cat = CategoryModel(
-            id: _uuid.v4(),
-            name: name,
-            iconCodePoint: iconCode,
-            type: type,
-          );
-          await HiveBoxes.categories.put(cat.id, cat);
-          ref.invalidate(categoryProvider);
-        },
-      ),
-    );
-  }
 }
 
 class _CategorySheet extends StatefulWidget {
   final String title;
-  final TextEditingController nameCtrl;
-  final int initialIconCode;
-  final Future<void> Function(String name, int iconCode) onSave;
+  final CategoryModel? existingCategory;
+  final String? parentId;
+  final String type;
 
   const _CategorySheet({
     required this.title,
-    required this.nameCtrl,
-    required this.initialIconCode,
-    required this.onSave,
+    this.existingCategory,
+    this.parentId,
+    required this.type,
   });
 
   @override
@@ -283,9 +323,11 @@ class _CategorySheet extends StatefulWidget {
 }
 
 class _CategorySheetState extends State<_CategorySheet> {
+  late TextEditingController _nameCtrl;
+  late TextEditingController _limitCtrl;
   late int _selectedIconCode;
+  String? _selectedParentId;
 
-  // Material icon codes for common categories
   final List<Map<String, dynamic>> _icons = [
     {'label': 'Market', 'code': 0xe59c},
     {'label': 'Yemek', 'code': 0xe57a},
@@ -296,111 +338,166 @@ class _CategorySheetState extends State<_CategorySheet> {
     {'label': 'Maaş', 'code': 0xe8f9},
     {'label': 'Kira', 'code': 0xe88f},
     {'label': 'Eğitim', 'code': 0xe80c},
-    {'label': 'Sigara', 'code': 0xe6f1},
     {'label': 'Eğlence', 'code': 0xe415},
     {'label': 'Hediye', 'code': 0xe7ee},
     {'label': 'Spor', 'code': 0xe52f},
-    {'label': 'Giyim', 'code': 0xe900},
-    {'label': 'Teknoloji', 'code': 0xe325},
     {'label': 'Yatırım', 'code': 0xe6de},
     {'label': 'Diğer', 'code': 0xe5d3},
-    {'label': 'Kilo', 'code': 0xe63e},
   ];
 
   @override
   void initState() {
     super.initState();
-    _selectedIconCode = widget.initialIconCode;
+    _nameCtrl = TextEditingController(text: widget.existingCategory?.name);
+    _limitCtrl = TextEditingController(
+      text: widget.existingCategory?.monthlyLimit?.toString() ?? '',
+    );
+    _selectedIconCode = widget.existingCategory?.iconCodePoint ?? _defaultIconCode;
+    _selectedParentId = widget.existingCategory?.parentCategory ?? widget.parentId;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.title,
-                style: GoogleFonts.poppins(color: AppColors.gold, fontSize: 18, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: widget.nameCtrl,
-              autofocus: true,
-              style: GoogleFonts.poppins(color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                labelText: 'Kategori Adı',
-                labelStyle: GoogleFonts.poppins(color: AppColors.textSecondary),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.glassBorder),
+    return Consumer(builder: (context, ref, _) {
+      final allCats = ref.watch(categoryProvider);
+      final potentialParents = allCats
+          .where((c) => c.type == widget.type && c.parentCategory == null && c.id != widget.existingCategory?.id)
+          .toList();
+
+      return Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(widget.title,
+                    style: GoogleFonts.poppins(color: AppColors.gold, fontSize: 18, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _nameCtrl,
+                  autofocus: widget.existingCategory == null,
+                  style: GoogleFonts.poppins(color: AppColors.textPrimary),
+                  decoration: _inputDecoration('Kategori Adı'),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.gold),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _selectedParentId,
+                  dropdownColor: AppColors.surface,
+                  style: GoogleFonts.poppins(color: AppColors.textPrimary),
+                  decoration: _inputDecoration('Üst Kategori (Opsiyonel)'),
+                  items: [
+                    const DropdownMenuItem(value: null, child: Text('Yok (Ana Grup)')),
+                    ...potentialParents.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))),
+                  ],
+                  onChanged: (val) => setState(() => _selectedParentId = val),
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text('İkon Seç', style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 12)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _icons.map((item) {
-                final selected = _selectedIconCode == item['code'];
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedIconCode = item['code'] as int),
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: selected ? AppColors.gold.withValues(alpha: 0.2) : AppColors.glassBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: selected ? AppColors.gold : AppColors.glassBorder,
-                        width: selected ? 1.5 : 1,
-                      ),
-                    ),
-                    child: Icon(
-                      IconData(item['code'] as int, fontFamily: 'MaterialIcons'),
-                      color: selected ? AppColors.gold : AppColors.textSecondary,
-                      size: 22,
-                    ),
+                const SizedBox(height: 16),
+                if (widget.type == 'expense')
+                  TextField(
+                    controller: _limitCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: GoogleFonts.poppins(color: AppColors.textPrimary),
+                    decoration: _inputDecoration('Aylık Bütçe Limiti (₺)'),
                   ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  final name = widget.nameCtrl.text.trim();
-                  if (name.isEmpty) return;
-                  await widget.onSave(name, _selectedIconCode);
-                  if (context.mounted) Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.gold,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                const SizedBox(height: 16),
+                Text('İkon Seç', style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 12)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _icons.map((item) {
+                    final selected = _selectedIconCode == item['code'];
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedIconCode = item['code'] as int),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: selected ? AppColors.gold.withValues(alpha: 0.2) : AppColors.glassBg,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: selected ? AppColors.gold : AppColors.glassBorder,
+                            width: selected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Icon(
+                          IconData(item['code'] as int, fontFamily: 'MaterialIcons'),
+                          color: selected ? AppColors.gold : AppColors.textSecondary,
+                          size: 20,
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
-                child: Text('KAYDET', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-              ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final name = _nameCtrl.text.trim();
+                      if (name.isEmpty) return;
+                      
+                      final limit = double.tryParse(_limitCtrl.text.replaceAll(',', '.'));
+                      
+                      if (widget.existingCategory != null) {
+                        widget.existingCategory!.name = name;
+                        widget.existingCategory!.iconCodePoint = _selectedIconCode;
+                        widget.existingCategory!.parentCategory = _selectedParentId;
+                        widget.existingCategory!.monthlyLimit = limit;
+                        await widget.existingCategory!.save();
+                      } else {
+                        final cat = CategoryModel(
+                          id: _uuid.v4(),
+                          name: name,
+                          iconCodePoint: _selectedIconCode,
+                          type: widget.type,
+                          parentCategory: _selectedParentId,
+                          monthlyLimit: limit,
+                        );
+                        await HiveBoxes.categories.put(cat.id, cat);
+                      }
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.gold,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: Text('KAYDET', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
+      );
+    });
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.glassBorder),
       ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.gold),
+      ),
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );
   }
 }

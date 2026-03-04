@@ -25,6 +25,10 @@ class CategoryModel extends HiveObject {
   @HiveField(5)
   String? color;
 
+  /// Optional budget limit for expenses (Phase 4)
+  @HiveField(6)
+  double? monthlyLimit;
+
   CategoryModel({
     required this.id,
     required this.name,
@@ -32,5 +36,6 @@ class CategoryModel extends HiveObject {
     this.type = 'expense',
     this.parentCategory,
     this.color,
+    this.monthlyLimit,
   });
 }

@@ -51,26 +51,58 @@ class VipBottomNavBar extends ConsumerWidget {
                   accent: accent,
                   onTap: () => onTap(1),
                 ),
-                // FAB center
+                // Action Buttons
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () => showAddTransactionSheet(context),
-                    child: Container(
-                      margin: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: accentGradient,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: accent.withValues(alpha: 0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
+                  flex: 2,
+                  child: Row(
+                    children: [
+                      // INCOME Button
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => showAddTransactionSheet(context, initialTab: 0),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF43E97B),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF43E97B).withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Icon(Icons.add_rounded, color: Colors.black, size: 24),
+                            ),
                           ),
-                        ],
+                        ),
                       ),
-                      child: const Icon(Icons.add_rounded,
-                          color: Color(0xFF0B0C10), size: 28),
-                    ),
+                      // EXPENSE Button
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => showAddTransactionSheet(context, initialTab: 1),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF6584),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFFF6584).withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Icon(Icons.remove_rounded, color: Colors.white, size: 24),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 _NavItem(

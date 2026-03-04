@@ -23,13 +23,14 @@ class CategoryModelAdapter extends TypeAdapter<CategoryModel> {
       type: fields[3] == null ? 'expense' : fields[3] as String,
       parentCategory: fields[4] as String?,
       color: fields[5] as String?,
+      monthlyLimit: fields[6] as double?,
     );
   }
 
   @override
   void write(BinaryWriter writer, CategoryModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class CategoryModelAdapter extends TypeAdapter<CategoryModel> {
       ..writeByte(4)
       ..write(obj.parentCategory)
       ..writeByte(5)
-      ..write(obj.color);
+      ..write(obj.color)
+      ..writeByte(6)
+      ..write(obj.monthlyLimit);
   }
 
   @override

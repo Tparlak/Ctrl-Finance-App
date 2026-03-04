@@ -20,9 +20,9 @@ class FixedExpensesScreen extends ConsumerWidget {
     final now = DateTime.now();
     final monthLabel = DateFormat('MMMM yyyy', 'tr_TR').format(now);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: CustomScrollView(
+    return Stack(
+      children: [
+        CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
@@ -98,6 +98,28 @@ class FixedExpensesScreen extends ConsumerWidget {
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
+        // Menu Button
+        Positioned(
+          top: 10,
+          left: 10,
+          child: SafeArea(
+            child: Builder(
+              builder: (ctx) => IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.glassBg,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.glassBorder),
+                  ),
+                  child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
+                ),
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

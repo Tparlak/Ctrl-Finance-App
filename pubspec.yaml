@@ -1,7 +1,7 @@
 name: vip_finance
 description: Ctrl - Personal Finance Tracker
 publish_to: 'none'
-version: 3.0.0+6
+version: 5.0.0+50
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -27,8 +27,13 @@ dependencies:
   # v3.0 — OCR Receipt Scanner
   google_mlkit_text_recognition: ^0.13.0
   image_picker: ^1.1.2
-  # v3.0 — Local Notifications (pinned to AGP 8.3.0 compatible version)
+  # v3.0 — Local Notifications
   flutter_local_notifications: ^17.2.4
+  # v5.0 — New
+  http: ^1.2.0
+  timezone: ^0.9.4
+  package_info_plus: ^8.0.0
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:

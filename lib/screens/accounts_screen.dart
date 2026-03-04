@@ -9,6 +9,11 @@ import '../providers/transaction_provider.dart';
 import '../models/account.dart';
 import '../models/transaction_model.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/timeline_transaction_list.dart';
+import '../utils/transaction_grouper.dart';
+import '../widgets/add_transaction_sheet.dart';
+import '../models/category_model.dart';
+import '../providers/category_provider.dart';
 
 
 
@@ -57,9 +62,9 @@ class AccountsScreen extends ConsumerWidget {
     addGroup('KREDİ KARTLARI', AppColors.red, cards);
     items.add({'type': 'addBtn'});
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: CustomScrollView(
+    return Stack(
+      children: [
+        CustomScrollView(
         slivers: [
           // ── Başlık ─────────────────────────────────────────────────────────
           SliverToBoxAdapter(
@@ -208,12 +213,33 @@ class AccountsScreen extends ConsumerWidget {
               ),
             ),
           ),
-
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
-    );
-  }
+      // Menu Button
+      Positioned(
+        top: 10,
+        left: 10,
+        child: SafeArea(
+          child: Builder(
+            builder: (ctx) => IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.glassBg,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.glassBorder),
+                ),
+                child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
+              ),
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
+}
 }
 
 // ─── Group Header ──────────────────────────────────────────────────────────
@@ -627,8 +653,10 @@ class _NormalView extends StatelessWidget {
       ),
       child: GlassCard(
         padding: const EdgeInsets.all(18),
-        child: Row(
+        child: Stack(
           children: [
+            Row(
+              children: [
             Container(
               width: 48,
               height: 48,
@@ -693,6 +721,29 @@ class _NormalView extends StatelessWidget {
                 const Icon(Icons.chevron_right,
                     color: AppColors.textSecondary, size: 18),
               ],
+            ),
+          ],
+        ),
+        // Menu Button
+        Positioned(
+          top: 10,
+          left: 10,
+          child: SafeArea(
+            child: Builder(
+              builder: (ctx) => IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.glassBg,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.glassBorder),
+                  ),
+                  child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
+                    ),
+                    onPressed: () => Scaffold.of(ctx).openDrawer(),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -898,16 +949,18 @@ class AccountDetailScreen extends ConsumerWidget {
               ),
             )
           else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (ctx, i) {
-                  final tx = txList[i];
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                    child: _TxTile(tx: tx, accounts: accounts),
-                  );
-                },
-                childCount: txList.length,
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TimelineTransactionList(
+                  grouped: TransactionGrouper.groupByDate(txList),
+                  categoryMap: {for (final c in (ref.watch(categoryProvider) as List<CategoryModel>)) c.id: c},
+                  accountMap: {for (final a in (accounts as List<Account>)) a.id: a},
+                  onDelete: (tx) => ref.read(transactionProvider.notifier).deleteTransaction(tx.id!),
+                  onTap: (tx) {
+                    // Show edit sheet
+                  },
+                ),
               ),
             ),
           const SliverToBoxAdapter(child: SizedBox(height: 80)),

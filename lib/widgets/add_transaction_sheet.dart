@@ -10,19 +10,21 @@ import '../widgets/glass_card.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/services/ocr_service.dart';
 import '../widgets/category_picker.dart';
+import '../data/models/receipt_item.dart';
 
-void showAddTransactionSheet(BuildContext context) {
+void showAddTransactionSheet(BuildContext context, {int initialTab = 1}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => const AddTransactionSheet(),
+    builder: (_) => AddTransactionSheet(initialTab: initialTab),
   );
 }
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
-  final dynamic existingTransaction; // TransactionModel? - kept as dynamic to avoid circular dep
-  const AddTransactionSheet({super.key, this.existingTransaction});
+  final dynamic existingTransaction;
+  final int initialTab; // 0=income, 1=expense, 2=transfer
+  const AddTransactionSheet({super.key, this.existingTransaction, this.initialTab = 1});
 
   @override
   ConsumerState<AddTransactionSheet> createState() =>
@@ -35,12 +37,12 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
   final _amountController = TextEditingController();
   final _descController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
   String? _fromAccountId;
   String? _toAccountId;
   String? _selectedCategoryId;
 
   String? _receiptImagePath;
-  final _ocrService = OcrService();
   bool _isScanning = false;
 
   // 0=income, 1=expense, 2=transfer
@@ -50,7 +52,6 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
   void initState() {
     super.initState();
     final existing = widget.existingTransaction;
-    int initialTab = 1; // default expense
     if (existing != null) {
       // Pre-fill for edit mode
       _amountController.text = existing.amount.toString();
@@ -59,11 +60,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
       _fromAccountId = existing.fromAccountId;
       _toAccountId = existing.toAccountId;
       _selectedCategoryId = existing.categoryId;
-      if (existing.type == 'income') initialTab = 0;
-      else if (existing.type == 'expense') initialTab = 1;
-      else initialTab = 2;
+      _receiptItems = existing.receiptItems ?? [];
+      _receiptImagePath = existing.receiptImagePath;
     }
-    _tabController = TabController(length: 3, vsync: this, initialIndex: initialTab);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTab);
     _tabController.addListener(() => setState(() {
       _selectedCategoryId = null;
     }));
@@ -74,23 +74,71 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
     _tabController.dispose();
     _amountController.dispose();
     _descController.dispose();
-    _ocrService.dispose();
+    OcrService.dispose();
     super.dispose();
   }
 
-  Future<void> _scanReceipt() async {
-    final picker = ImagePicker();
-    final photo = await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
+  List<ReceiptItem> _receiptItems = [];
+
+  Future<void> _showScanOptions() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1E1E1E) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(color: Colors.grey.shade600, borderRadius: BorderRadius.circular(2))),
+            Text('Fiş Ekle', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Text('📸', style: TextStyle(fontSize: 24)),
+              title: Text('Kameradan Çek', style: GoogleFonts.poppins(color: AppColors.textPrimary)),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Text('🖼️', style: TextStyle(fontSize: 24)),
+              title: Text('Galeriden Seç', style: GoogleFonts.poppins(color: AppColors.textPrimary)),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+    final photo = await ImagePicker().pickImage(source: source, imageQuality: 85);
     if (photo == null) return;
 
     setState(() => _isScanning = true);
     try {
-      final result = await _ocrService.scanReceipt(photo.path);
+      final result = await OcrService.scanImage(photo.path);
       setState(() {
         _receiptImagePath = photo.path;
-        if (result.amount != null) _amountController.text = result.amount!.toStringAsFixed(2).replaceAll('.', ',');
-        if (result.description != null && _descController.text.isEmpty) {
-          _descController.text = result.description!;
+        _receiptItems = result.items;
+        if (result.amount != null) {
+          _amountController.text = result.amount!.toStringAsFixed(2).replaceAll('.', ',');
+        }
+        if (result.merchantName != null && _descController.text.isEmpty) {
+          _descController.text = result.merchantName!;
+        }
+        if (result.date != null) _selectedDate = result.date!;
+        if (result.time != null) _selectedTime = result.time!;
+        
+        // Auto-select account from hint if match found
+        if (result.accountHint != null && result.accountHint!.isNotEmpty) {
+          final accounts = ref.read(accountProvider);
+          final match = accounts.where((a) => 
+            a.name.toUpperCase().contains(result.accountHint!.toUpperCase())).firstOrNull;
+          if (match != null) _fromAccountId = match.id;
         }
       });
     } catch (e) {
@@ -102,6 +150,47 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
     } finally {
       setState(() => _isScanning = false);
     }
+  }
+
+  Future<void> _submit() async {
+    final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Geçerli bir tutar giriniz.')),
+      );
+      return;
+    }
+    if (_fromAccountId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Hesap seçiniz.')),
+      );
+      return;
+    }
+    if (_tab == 2 && _toAccountId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Hedef hesap seçiniz.')),
+      );
+      return;
+    }
+
+    final fullDateTime = DateTime(
+      _selectedDate.year, _selectedDate.month, _selectedDate.day,
+      _selectedTime.hour, _selectedTime.minute,
+    );
+
+    await ref.read(transactionProvider.notifier).addTransaction(
+          amount: amount,
+          type: _txType,
+          fromAccountId: _fromAccountId!,
+          toAccountId: _toAccountId,
+          categoryId: _selectedCategoryId,
+          description: _descController.text.trim(),
+          date: fullDateTime,
+          receiptImagePath: _receiptImagePath,
+          receiptItems: _receiptItems.isNotEmpty ? _receiptItems : null,
+        );
+
+    if (mounted) Navigator.of(context).pop();
   }
 
   String get _actionLabel {
@@ -137,48 +226,175 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
     }
   }
 
-  Future<void> _submit() async {
-    final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
-    if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Geçerli bir tutar giriniz.')),
-      );
-      return;
-    }
-    if (_fromAccountId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hesap seçiniz.')),
-      );
-      return;
-    }
-    if (_tab == 2 && _toAccountId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hedef hesap seçiniz.')),
-      );
-      return;
-    }
+  Widget _buildTabContent() {
+    final accounts = ref.watch(accountProvider);
+    final categories = _tab == 0
+        ? ref.watch(incomeCategoryProvider)
+        : ref.watch(expenseCategoryProvider);
 
-    await ref.read(transactionProvider.notifier).addTransaction(
-          amount: amount,
-          type: _txType,
-          fromAccountId: _fromAccountId!,
-          toAccountId: _toAccountId,
-          categoryId: _selectedCategoryId,
-          description: _descController.text.trim(),
-          date: _selectedDate,
-          receiptImagePath: _receiptImagePath,
-        );
-
-    if (mounted) Navigator.of(context).pop();
+    return Column(
+      key: ValueKey(_tab),
+      children: [
+        if (_tab != 2) ...[
+          const SizedBox(height: 12),
+          // Category Selector
+          GestureDetector(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: AppColors.background,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                builder: (_) => CategoryPicker(
+                  type: _txType,
+                  onSelected: (cat) {
+                    setState(() => _selectedCategoryId = cat.id);
+                  },
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.glassBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.glassBorder),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.category_outlined, color: _actionColor, size: 18),
+                      const SizedBox(width: 12),
+                      Text(
+                        _selectedCategoryId == null 
+                          ? 'Kategori Seç' 
+                          : categories.firstWhere((c) => c.id == _selectedCategoryId, orElse: () => categories.first).name,
+                        style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                  Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 20),
+                ],
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        // From Account
+        _AccountSelector(
+          label: _tab == 2 ? 'Kaynak Hesap' : 'Hesap',
+          accounts: accounts,
+          selectedId: _fromAccountId,
+          excludeId: _toAccountId,
+          onChanged: (id) => setState(() => _fromAccountId = id),
+        ),
+        if (_tab == 2) ...[
+          const SizedBox(height: 12),
+          _AccountSelector(
+            label: 'Hedef Hesap',
+            accounts: accounts,
+            selectedId: _toAccountId,
+            excludeId: _fromAccountId,
+            onChanged: (id) => setState(() => _toAccountId = id),
+          ),
+        ],
+        const SizedBox(height: 12),
+        // Description
+        TextField(
+          controller: _descController,
+          style: GoogleFonts.poppins(color: AppColors.textPrimary),
+          decoration: const InputDecoration(
+            labelText: 'Açıklama (opsiyonel)',
+            prefixIcon:
+                Icon(Icons.notes_outlined, color: AppColors.textSecondary),
+          ),
+        ),
+        const SizedBox(height: 20),
+        // Amount
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _amountController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                style: GoogleFonts.poppins(
+                  color: _actionColor,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                  labelText: 'TUTAR',
+                  labelStyle: GoogleFonts.poppins(
+                      color: AppColors.textSecondary, fontSize: 13),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: _actionColor, width: 1.5),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        BorderSide(color: _actionColor.withValues(alpha: 0.4)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: _actionColor, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: _actionColor.withValues(alpha: 0.05),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+              Container(
+                height: 72,
+                decoration: BoxDecoration(
+                  color: AppColors.glassBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.glassBorder),
+                ),
+                child: IconButton(
+                  icon: _isScanning 
+                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.gold))
+                    : const Icon(Icons.document_scanner_outlined, color: AppColors.gold),
+                  tooltip: 'Fiş Tara',
+                  onPressed: _isScanning ? null : _showScanOptions,
+                ),
+              ),
+            ],
+          ),
+          if (_receiptItems.isNotEmpty)
+            Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+                iconColor: AppColors.gold,
+                collapsedIconColor: AppColors.gold,
+                title: Text(
+                  'Ürün Listesi (${_receiptItems.length})',
+                  style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                children: _receiptItems.map((item) => ListTile(
+                  dense: true,
+                  title: Text(item.name, style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 12)),
+                  trailing: Text(
+                    '${item.price.toStringAsFixed(2)} ₺',
+                    style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                )).toList(),
+              ),
+            ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final accounts = ref.watch(accountProvider);
-    // Show income or expense categories based on active tab
-    final categories = _tab == 0
-        ? ref.watch(incomeCategoryProvider)
-        : ref.watch(expenseCategoryProvider);
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
@@ -200,13 +416,13 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                 child: Container(
                   width: 40,
                   height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
                     color: AppColors.glassBorder,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
               Text(
                 'İŞLEM EKLE',
                 style: GoogleFonts.poppins(
@@ -242,181 +458,104 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                 ),
               ),
               const SizedBox(height: 20),
-              // Date picker
-              GestureDetector(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                    builder: (ctx, child) => Theme(
-                      data: Theme.of(ctx).copyWith(
-                        colorScheme: const ColorScheme.dark(
-                          primary: AppColors.gold,
-                          surface: Color(0xFF1A1B22),
+              // Date + Time row
+              Row(
+                children: [
+                  // Date picker
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _selectedDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2030),
+                          builder: (ctx, child) => Theme(
+                            data: Theme.of(ctx).copyWith(
+                              colorScheme: const ColorScheme.dark(
+                                primary: AppColors.gold,
+                                surface: Color(0xFF1A1B22),
+                              ),
+                            ),
+                            child: child!,
+                          ),
+                        );
+                        if (picked != null) setState(() => _selectedDate = picked);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppColors.glassBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.glassBorder),
                         ),
-                      ),
-                      child: child!,
-                    ),
-                  );
-                  if (picked != null) setState(() => _selectedDate = picked);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.glassBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.glassBorder),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.calendar_today_outlined,
-                          color: AppColors.gold, size: 18),
-                      const SizedBox(width: 12),
-                      Text(
-                        DateFormat('dd MMMM yyyy', 'tr_TR')
-                            .format(_selectedDate),
-                        style: GoogleFonts.poppins(
-                            color: AppColors.textPrimary, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // From Account
-              _AccountSelector(
-                label: _tab == 2 ? 'Kaynak Hesap' : 'Hesap',
-                accounts: accounts,
-                selectedId: _fromAccountId,
-                excludeId: _toAccountId,
-                onChanged: (id) => setState(() => _fromAccountId = id),
-              ),
-              if (_tab == 2) ...[
-                const SizedBox(height: 12),
-                _AccountSelector(
-                  label: 'Hedef Hesap',
-                  accounts: accounts,
-                  selectedId: _toAccountId,
-                  excludeId: _fromAccountId,
-                  onChanged: (id) => setState(() => _toAccountId = id),
-                ),
-              ],
-              if (_tab != 2) ...[
-                const SizedBox(height: 12),
-                // Category Selector
-                GestureDetector(
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: AppColors.background,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                      ),
-                      builder: (_) => CategoryPicker(
-                        type: _txType,
-                        onSelected: (cat) {
-                          setState(() => _selectedCategoryId = cat.id);
-                        },
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: AppColors.glassBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.glassBorder),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.category_outlined, color: _actionColor, size: 18),
-                            const SizedBox(width: 12),
+                            const Icon(Icons.calendar_today_outlined,
+                                color: AppColors.gold, size: 16),
+                            const SizedBox(width: 8),
                             Text(
-                              _selectedCategoryId == null 
-                                ? 'Kategori Seç' 
-                                : categories.firstWhere((c) => c.id == _selectedCategoryId, orElse: () => categories.first).name,
-                              style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 14),
+                              DateFormat('dd MMM yyyy', 'tr_TR').format(_selectedDate),
+                              style: GoogleFonts.poppins(
+                                  color: AppColors.textPrimary, fontSize: 13),
                             ),
                           ],
                         ),
-                        Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 20),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 12),
-              // Description
-              TextField(
-                controller: _descController,
-                style: GoogleFonts.poppins(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                  labelText: 'Açıklama (opsiyonel)',
-                  prefixIcon:
-                      Icon(Icons.notes_outlined, color: AppColors.textSecondary),
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Amount
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _amountController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      style: GoogleFonts.poppins(
-                        color: _actionColor,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      textAlign: TextAlign.center,
-                      decoration: InputDecoration(
-                        labelText: 'TUTAR',
-                        labelStyle: GoogleFonts.poppins(
-                            color: AppColors.textSecondary, fontSize: 13),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: _actionColor, width: 1.5),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              BorderSide(color: _actionColor.withValues(alpha: 0.4)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: _actionColor, width: 2),
-                        ),
-                        filled: true,
-                        fillColor: _actionColor.withValues(alpha: 0.05),
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: AppColors.glassBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.glassBorder),
-                    ),
-                    child: IconButton(
-                      icon: _isScanning 
-                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.gold))
-                        : const Icon(Icons.document_scanner_outlined, color: AppColors.gold),
-                      tooltip: 'Fiş Tara',
-                      onPressed: _isScanning ? null : _scanReceipt,
+                  // Time picker
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: _selectedTime,
+                        builder: (ctx, child) => MediaQuery(
+                          data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+                          child: child!,
+                        ),
+                      );
+                      if (picked != null) setState(() => _selectedTime = picked);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: AppColors.glassBg,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.glassBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.access_time_rounded,
+                              color: AppColors.gold, size: 16),
+                          const SizedBox(width: 8),
+                          Text(
+                            _selectedTime.format(context),
+                            style: GoogleFonts.poppins(
+                                color: AppColors.textPrimary, fontSize: 13),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
+              
+              // Animated Tab Content
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(begin: const Offset(0.05, 0), end: Offset.zero)
+                        .animate(CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic)),
+                    child: child,
+                  ),
+                ),
+                child: _buildTabContent(),
+              ),
+
               const SizedBox(height: 24),
               // Action button
               SizedBox(

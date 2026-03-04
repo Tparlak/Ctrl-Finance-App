@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import '../data/models/receipt_item.dart';
 
 part 'transaction_model.g.dart';
 
@@ -32,6 +33,9 @@ class TransactionModel extends HiveObject {
   @HiveField(8)
   String? receiptImagePath;
 
+  @HiveField(9)
+  List<ReceiptItem>? receiptItems; // Phase 7
+
   TransactionModel({
     required this.id,
     required this.amount,
@@ -42,5 +46,6 @@ class TransactionModel extends HiveObject {
     required this.description,
     required this.date,
     this.receiptImagePath,
+    this.receiptItems,
   });
 }

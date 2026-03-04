@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'data/hive_boxes.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_colors.dart';
@@ -11,27 +12,32 @@ import 'screens/dashboard_screen.dart';
 import 'screens/accounts_screen.dart';
 import 'screens/fixed_expenses_screen.dart';
 import 'screens/ctrl_center_screen.dart';
-import 'screens/ctrl_center_screen.dart';
+import 'screens/car_ledger_screen.dart';
+import 'screens/notes_screen.dart';
+import 'screens/reminders_screen.dart';
+import 'screens/markets_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
+import 'widgets/app_drawer.dart';
+import 'widgets/add_transaction_sheet.dart';
 import 'screens/onboarding_screen.dart';
 import 'providers/theme_provider.dart';
 import 'providers/fixed_expense_provider.dart';
+import 'providers/navigation_provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/services/notification_service.dart';
 import 'data/services/home_widget_service.dart';
+import 'data/services/permission_service.dart';
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  // Force portrait orientation
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Transparent status bar so content bleeds under it
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -42,19 +48,17 @@ Future<void> main() async {
   );
 
   try {
-    // ─── Local Database ────────────────────────────────────────────────────────
     await Hive.initFlutter();
     await HiveBoxes.openAll();
-
-    // ─── Locale (Turkish date/number formatting) ───────────────────────────────
     await initializeDateFormatting('tr_TR', null);
-
-    // ─── Notifications ─────────────────────────────────────────────────────────
-    await NotificationService.init();
-
-    // ─── Home Widgets ──────────────────────────────────────────────────────────
-    await HomeWidgetService.init();
-    await HomeWidgetService.syncWidgetData();
+    if (!kIsWeb) {
+      await NotificationService.init();
+    }
+    if (!kIsWeb) {
+      await HomeWidgetService.init();
+      await HomeWidgetService.syncWidgetData();
+    }
+    await PermissionService.requestInitialPermissions();
   } catch (e) {
     runApp(
       MaterialApp(
@@ -71,7 +75,7 @@ Future<void> main() async {
                   const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 60),
                   const SizedBox(height: 16),
                   Text(
-                    'Veritabanı Açılış Hatası\n\n$e',
+                    'VeritabanÄ± AÃ§Ä±lÄ±ÅŸ HatasÄ±\n\n$e',
                     style: const TextStyle(color: Colors.redAccent, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
@@ -86,7 +90,7 @@ Future<void> main() async {
                       }
                     },
                     icon: const Icon(Icons.delete_forever, color: Colors.white),
-                    label: const Text('Verileri Sıfırla ve Çık', style: TextStyle(color: Colors.white)),
+                    label: const Text('Verileri SÄ±fÄ±rla ve Ã‡Ä±k', style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                   ),
                 ],
@@ -108,10 +112,6 @@ Future<void> main() async {
   FlutterNativeSplash.remove();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Root App
-// ─────────────────────────────────────────────────────────────────────────────
-
 class CtrlApp extends ConsumerWidget {
   const CtrlApp({super.key});
 
@@ -127,6 +127,12 @@ class CtrlApp extends ConsumerWidget {
       theme: AppTheme.lightTheme(accent),
       darkTheme: AppTheme.darkTheme(accent),
       home: const _AppRoot(),
+      routes: {
+        '/car-ledger':  (_) => const CarLedgerScreen(),
+        '/notes':       (_) => const NotesScreen(),
+        '/reminders':   (_) => const RemindersScreen(),
+        '/markets':     (_) => const MarketsScreen(),
+      },
       builder: (context, child) => child!,
     );
   }
@@ -146,7 +152,6 @@ class _AppRootState extends ConsumerState<_AppRoot> {
     super.initState();
     _onboardingDoneFuture = SharedPreferences.getInstance()
         .then((prefs) => prefs.getBool('isOnboardingDone') ?? false);
-        
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(fixedExpenseProvider.notifier).checkUpcomingPayments();
     });
@@ -175,10 +180,6 @@ class _AppRootState extends ConsumerState<_AppRoot> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// App Lock Screen
-// ─────────────────────────────────────────────────────────────────────────────
-
 class AppLockScreen extends StatefulWidget {
   const AppLockScreen({super.key});
 
@@ -197,9 +198,8 @@ class _AppLockScreenState extends State<AppLockScreen> {
         if (_input == truePin) {
           Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const HomeShell()));
         } else {
-          // wrong pin
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Hatalı PIN!'), backgroundColor: AppColors.red),
+            const SnackBar(content: Text('HatalÄ± PIN!'), backgroundColor: AppColors.red),
           );
           setState(() => _input = "");
         }
@@ -285,22 +285,17 @@ class _AppLockScreenState extends State<AppLockScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shell — manages bottom nav + screen switching
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Home Shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-class HomeShell extends StatefulWidget {
+class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
-
   @override
-  State<HomeShell> createState() => _HomeShellState();
+  ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
-  int _currentIndex = 0;
+class _HomeShellState extends ConsumerState<HomeShell> {
+  // int _currentIndex = 0; // Removed local state
 
-  // Use const constructors — IndexedStack keeps all screens alive,
-  // so state (scroll position, etc.) is preserved across tab switches.
   static const List<Widget> _screens = [
     DashboardScreen(),
     AccountsScreen(),
@@ -309,12 +304,21 @@ class _HomeShellState extends State<HomeShell> {
   ];
 
   void _onNavTap(int index) {
-    if (index == _currentIndex) return; // avoid redundant setState
-    setState(() => _currentIndex = index);
+    ref.read(navigationProvider.notifier).setIndex(index);
+  }
+
+  void _openAdd(int tabIndex) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddTransactionSheet(initialTab: tabIndex),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentIndex = ref.watch(navigationProvider);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -323,44 +327,34 @@ class _HomeShellState extends State<HomeShell> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         extendBodyBehindAppBar: true,
-        extendBody: true, // content flows behind floating nav bar
+        extendBody: true,
+        drawer: const AppDrawer(),
         body: Stack(
           children: [
-            // ── Ambient glow decorations ──────────────────────────────────
             Positioned(
               top: -120,
               left: -80,
-              child: _GlowOrb(
-                size: 320,
-                color: AppColors.gold.withValues(alpha: 0.06),
-              ),
+              child: _GlowOrb(size: 320, color: AppColors.gold.withValues(alpha: 0.06)),
             ),
             Positioned(
               bottom: 60,
               right: -100,
-              child: _GlowOrb(
-                size: 260,
-                color: AppColors.blue.withValues(alpha: 0.04),
-              ),
+              child: _GlowOrb(size: 260, color: AppColors.blue.withValues(alpha: 0.04)),
             ),
             Positioned(
               top: 300,
               right: -60,
-              child: _GlowOrb(
-                size: 180,
-                color: AppColors.green.withValues(alpha: 0.03),
-              ),
+              child: _GlowOrb(size: 180, color: AppColors.green.withValues(alpha: 0.03)),
             ),
-
-            // ── Main screen content ───────────────────────────────────────
             IndexedStack(
-              index: _currentIndex,
+              index: currentIndex,
               children: _screens,
             ),
           ],
         ),
+
         bottomNavigationBar: VipBottomNavBar(
-          currentIndex: _currentIndex,
+          currentIndex: currentIndex,
           onTap: _onNavTap,
         ),
       ),
@@ -368,14 +362,9 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Ambient glow orb helper
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _GlowOrb extends StatelessWidget {
   final double size;
   final Color color;
-
   const _GlowOrb({required this.size, required this.color});
 
   @override
@@ -393,4 +382,5 @@ class _GlowOrb extends StatelessWidget {
     );
   }
 }
+
 

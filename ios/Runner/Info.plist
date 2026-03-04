@@ -45,6 +45,10 @@
 		<true/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
+		<key>NSCameraUsageDescription</key>
+		<string>Fişlerinizi tarayabilmek için kamera erişimine ihtiyaç duymaktayız.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Fişlerinizi galeriniden seçebilmek için fotoğraf kitaplığına erişime ihtiyaç duymaktayız.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
 	</dict>

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../models/transaction_model.dart';
+import '../data/models/receipt_item.dart';
 import '../data/hive_boxes.dart';
 import 'account_provider.dart';
 import '../data/services/home_widget_service.dart';
@@ -33,6 +34,7 @@ class TransactionNotifier extends StateNotifier<List<TransactionModel>> {
     required String description,
     required DateTime date,
     String? receiptImagePath,
+    List<ReceiptItem>? receiptItems,
   }) async {
     final tx = TransactionModel(
       id: _uuid.v4(),
@@ -44,6 +46,7 @@ class TransactionNotifier extends StateNotifier<List<TransactionModel>> {
       description: description,
       date: date,
       receiptImagePath: receiptImagePath,
+      receiptItems: receiptItems,
     );
 
     await HiveBoxes.transactions.put(tx.id, tx);
@@ -107,6 +110,8 @@ class TransactionNotifier extends StateNotifier<List<TransactionModel>> {
       categoryId: updated.categoryId,
       description: updated.description,
       date: updated.date,
+      receiptImagePath: updated.receiptImagePath,
+      receiptItems: updated.receiptItems,
     );
     // Override the id back (addTransaction creates new UUID)
     // We'll save directly
@@ -117,6 +122,21 @@ class TransactionNotifier extends StateNotifier<List<TransactionModel>> {
 final transactionProvider =
     StateNotifierProvider<TransactionNotifier, List<TransactionModel>>(
         (ref) => TransactionNotifier(ref));
+
+/// The currently selected month for filtering
+final selectedMonthProvider = StateProvider<DateTime>((ref) {
+  final now = DateTime.now();
+  return DateTime(now.year, now.month);
+});
+
+/// Transactions filtered by the selected month
+final filteredTransactionsProvider = Provider<List<TransactionModel>>((ref) {
+  final allTx = ref.watch(transactionProvider);
+  final selectedMonth = ref.watch(selectedMonthProvider);
+  return allTx.where((tx) {
+    return tx.date.year == selectedMonth.year && tx.date.month == selectedMonth.month;
+  }).toList();
+});
 
 /// Total income (all time — kept for reference)
 final totalIncomeProvider = Provider<double>((ref) {
@@ -134,26 +154,19 @@ final totalExpenseProvider = Provider<double>((ref) {
       .fold(0.0, (sum, t) => sum + t.amount);
 });
 
-/// Income for the CURRENT calendar month only (used on Dashboard summary card)
+/// Income for the SELECTED calendar month (used on Dashboard summary card)
 final currentMonthIncomeProvider = Provider<double>((ref) {
-  final txs = ref.watch(transactionProvider);
-  final now = DateTime.now();
+  final txs = ref.watch(filteredTransactionsProvider);
   return txs
-      .where((t) =>
-          t.type == 'income' &&
-          t.date.year == now.year &&
-          t.date.month == now.month)
+      .where((t) => t.type == 'income')
       .fold(0.0, (sum, t) => sum + t.amount);
 });
 
-/// Expense for the CURRENT calendar month only (used on Dashboard summary card)
+/// Expense for the SELECTED calendar month (used on Dashboard summary card)
 final currentMonthExpenseProvider = Provider<double>((ref) {
-  final txs = ref.watch(transactionProvider);
-  final now = DateTime.now();
+  final txs = ref.watch(filteredTransactionsProvider);
   return txs
-      .where((t) =>
-          t.type == 'expense' &&
-          t.date.year == now.year &&
-          t.date.month == now.month)
+      .where((t) => t.type == 'expense')
       .fold(0.0, (sum, t) => sum + t.amount);
 });
+

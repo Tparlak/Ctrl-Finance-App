@@ -26,13 +26,14 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       description: fields[6] as String,
       date: fields[7] as DateTime,
       receiptImagePath: fields[8] as String?,
+      receiptItems: (fields[9] as List?)?.cast<ReceiptItem>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, TransactionModel obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class TransactionModelAdapter extends TypeAdapter<TransactionModel> {
       ..writeByte(7)
       ..write(obj.date)
       ..writeByte(8)
-      ..write(obj.receiptImagePath);
+      ..write(obj.receiptImagePath)
+      ..writeByte(9)
+      ..write(obj.receiptItems);
   }
 
   @override
