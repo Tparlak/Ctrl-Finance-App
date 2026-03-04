@@ -8,6 +8,7 @@ import '../models/fixed_expense.dart';
 import '../models/car_expense.dart';
 import '../models/note_model.dart';
 import '../models/reminder_model.dart';
+import 'models/receipt_item.dart';
 
 const String _accountsBoxName = 'accounts';
 const String _categoriesBoxName = 'categories';
@@ -34,6 +35,7 @@ class HiveBoxes {
     Hive.registerAdapter(CarExpenseAdapter());
     Hive.registerAdapter(NoteModelAdapter());
     Hive.registerAdapter(ReminderModelAdapter());
+    Hive.registerAdapter(ReceiptItemAdapter());
 
     await Hive.openBox<Account>(_accountsBoxName);
     await Hive.openBox<CategoryModel>(_categoriesBoxName);

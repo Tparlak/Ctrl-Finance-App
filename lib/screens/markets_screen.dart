@@ -25,7 +25,8 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
     final mp = ref.watch(marketProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

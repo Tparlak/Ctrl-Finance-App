@@ -20,13 +20,42 @@ class FixedExpensesScreen extends ConsumerWidget {
     final now = DateTime.now();
     final monthLabel = DateFormat('MMMM yyyy', 'tr_TR').format(now);
 
-    return Stack(
-      children: [
-        CustomScrollView(
-        slivers: [
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                child: SafeArea(
+                  bottom: false,
+                  child: Row(
+                    children: [
+                      Builder(
+                        builder: (ctx) => IconButton(
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.glassBg,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.glassBorder),
+                            ),
+                            child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
+                          ),
+                          onPressed: () => Scaffold.of(ctx).openDrawer(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 4),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,

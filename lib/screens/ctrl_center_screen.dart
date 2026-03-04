@@ -24,266 +24,265 @@ class CtrlCenterScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeState = ref.watch(themeProvider);
-    return Stack(
-      children: [
-        CustomScrollView(
-        slivers: [
-          // ── Header ──────────────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      // Avatar / badge
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          gradient: AppColors.goldGradient,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.gold.withOpacity( 0.4),
-                              blurRadius: 16,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'T',
-                            style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.black),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'VIP KULLANICI',
-                            style: GoogleFonts.poppins(
-                              color: AppColors.textSecondary,
-                              fontSize: 10,
-                              letterSpacing: 2,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            'Taner',
-                            style: GoogleFonts.poppins(
-                              color: AppColors.textPrimary,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.gold.withOpacity( 0.15),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                              color: AppColors.gold.withOpacity( 0.4)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.star_rounded,
-                                color: AppColors.gold, size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              'VIP',
-                              style: GoogleFonts.poppins(
-                                color: AppColors.gold,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-                  Text(
-                    'CTRL CENTER',
-                    style: GoogleFonts.poppins(
-                      color: AppColors.textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            ),
-          ),
-
-          // ── 4-tile Grid ──────────────────────────────────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childAspectRatio: 1.0,
-              ),
-              delegate: SliverChildListDelegate([
-                _CtrlTile(
-                  icon: Icons.security_rounded,
-                  title: 'GÜVENLİK',
-                  subtitle: 'Uygulama açılış şifresi',
-                  accent: AppColors.blue,
-                  onTap: () => _showSecurityDialog(context),
-                ),
-                _CtrlTile(
-                  icon: Icons.file_download_rounded,
-                  title: 'DIŞA AKTAR',
-                  subtitle: 'İşlemleri CSV olarak indir',
-                  accent: AppColors.green,
-                  onTap: () => _exportToCSV(context),
-                ),
-                _CtrlTile(
-                  icon: Icons.palette_rounded,
-                  title: 'GÖRÜNÜM',
-                  subtitle: 'Renk ve Tema Seçimi',
-                  accent: themeState.variant.accent,
-                  onTap: () => _showThemeDialog(context, ref),
-                ),
-                _CtrlTile(
-                  icon: Icons.category_rounded,
-                  title: 'KATEGORİLER',
-                  subtitle: 'Gelir/Gider kategorileri',
-                  accent: AppColors.gold,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => Scaffold(
-                        extendBodyBehindAppBar: true,
-                        backgroundColor: AppColors.background,
-                        appBar: AppBar(
-                          backgroundColor: Colors.transparent,
-                          elevation: 0,
-                          leading: IconButton(
-                            icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                        ),
-                        body: const CategoryManagerScreen(),
-                      ),
-                    ),
-                  ),
-                ),
-                _CtrlTile(
-                  icon: Icons.storage_rounded,
-                  title: 'VERİ YÖNETİMİ',
-                  subtitle: 'Yedekle & Sıfırla',
-                  accent: AppColors.red,
-                  onTap: () => _showResetDialog(context, ref),
-                ),
-              ]),
-            ),
-          ),
-
-          // ── Footer ───────────────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
-              child: GlassCard(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Row(
                       children: [
-                        ShaderMask(
-                          shaderCallback: (b) =>
-                              AppColors.goldGradient.createShader(b),
-                          child: Text(
-                            'CTRL',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 4,
+                        Builder(
+                          builder: (ctx) => IconButton(
+                            icon: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.glassBg,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.glassBorder),
+                              ),
+                              child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
                             ),
+                            onPressed: () => Scaffold.of(ctx).openDrawer(),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Versiyon 3.0.0',
-                      style: GoogleFonts.poppins(
-                          color: AppColors.textSecondary, fontSize: 12),
-                    ),
-                    const SizedBox(height: 12),
-                    GestureDetector(
-                      onTap: () async {
-                        final uri = Uri.parse('https://github.com/Tparlak/Ctrl-Finance-App');
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
-                        }
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          const Icon(Icons.code_rounded,
-                              color: AppColors.textSecondary, size: 16),
-                          const SizedBox(width: 6),
-                          Text(
-                            'github.com/Tparlak/Ctrl-Finance-App',
-                            style: GoogleFonts.poppins(
-                              color: AppColors.textSecondary,
-                              fontSize: 11,
-                              decoration: TextDecoration.underline,
+                          // Avatar / badge
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              gradient: AppColors.goldGradient,
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.gold.withOpacity(0.4),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'T',
+                                style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.black),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'VIP KULLANICI',
+                                style: GoogleFonts.poppins(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 10,
+                                  letterSpacing: 2,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                'Taner',
+                                style: GoogleFonts.poppins(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.gold.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: AppColors.gold.withOpacity(0.4)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.star_rounded,
+                                    color: AppColors.gold, size: 14),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'VIP',
+                                  style: GoogleFonts.poppins(
+                                    color: AppColors.gold,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 28),
+                      Text(
+                        'CTRL CENTER',
+                        style: GoogleFonts.poppins(
+                          color: AppColors.textPrimary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
-              ),
+
+                const SizedBox(height: 16),
+                // ── 4-tile Grid ──────────────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                    childAspectRatio: 1.0,
+                    children: [
+                      _CtrlTile(
+                        icon: Icons.security_rounded,
+                        title: 'GÜVENLİK',
+                        subtitle: 'Uygulama açılış şifresi',
+                        accent: AppColors.blue,
+                        onTap: () => _showSecurityDialog(context),
+                      ),
+                      _CtrlTile(
+                        icon: Icons.file_download_rounded,
+                        title: 'DIŞA AKTAR',
+                        subtitle: 'İşlemleri CSV olarak indir',
+                        accent: AppColors.green,
+                        onTap: () => _exportToCSV(context),
+                      ),
+                      _CtrlTile(
+                        icon: Icons.palette_rounded,
+                        title: 'GÖRÜNÜM',
+                        subtitle: 'Renk ve Tema Seçimi',
+                        accent: themeState.variant.accent,
+                        onTap: () => _showThemeDialog(context, ref),
+                      ),
+                      _CtrlTile(
+                        icon: Icons.category_rounded,
+                        title: 'KATEGORİLER',
+                        subtitle: 'Gelir/Gider kategorileri',
+                        accent: AppColors.gold,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => Scaffold(
+                              extendBodyBehindAppBar: true,
+                              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                              appBar: AppBar(
+                                backgroundColor: Colors.transparent,
+                                elevation: 0,
+                                leading: IconButton(
+                                  icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                              ),
+                              body: const CategoryManagerScreen(),
+                            ),
+                          ),
+                        ),
+                      ),
+                      _CtrlTile(
+                        icon: Icons.storage_rounded,
+                        title: 'VERİ YÖNETİMİ',
+                        subtitle: 'Yedekle & Sıfırla',
+                        accent: AppColors.red,
+                        onTap: () => _showResetDialog(context, ref),
+                      ),
+                    ],
+                  ),
+                ),
+                // ── Footer ───────────────────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+                  child: GlassCard(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ShaderMask(
+                              shaderCallback: (b) => AppColors.goldGradient.createShader(b),
+                              child: Text(
+                                'CTRL',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const VersionFooter(),
+                        const SizedBox(height: 12),
+                        GestureDetector(
+                          onTap: () async {
+                            final uri = Uri.parse('https://github.com/Tparlak/Ctrl-Finance-App');
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.code_rounded, color: AppColors.textSecondary, size: 16),
+                              const SizedBox(width: 6),
+                              Text(
+                                'github.com/Tparlak/Ctrl-Finance-App',
+                                style: GoogleFonts.poppins(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 100),
+              ],
             ),
           ),
         ],
       ),
-      // Menu Button
-      Positioned(
-        top: 10,
-        left: 10,
-        child: SafeArea(
-          child: Builder(
-            builder: (ctx) => IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.glassBg,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.glassBorder),
-                ),
-                child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
-              ),
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
-          ),
-        ),
-      ),
-    ],
-  );
-}
+    );
+  }
 
   void _showComingSoon(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -419,7 +418,7 @@ class CtrlCenterScreen extends ConsumerWidget {
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: selected ? theme.accent.withOpacity( 0.15) : themeBg,
+                        color: selected ? theme.accent.withOpacity(0.15) : themeBg,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: selected ? theme.accent : themeBorder,
@@ -458,7 +457,7 @@ class CtrlCenterScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('KAPAT', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface.withOpacity( 0.7))),
+            child: Text('KAPAT', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
           ),
         ],
       ),
@@ -521,8 +520,6 @@ class CtrlCenterScreen extends ConsumerWidget {
   }
 }
 
-// ── Tile Widget ──────────────────────────────────────────────────────────────
-
 class _CtrlTile extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -547,7 +544,7 @@ class _CtrlTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: accent.withOpacity( 0.1),
+              color: accent.withOpacity(0.1),
               blurRadius: 16,
               spreadRadius: 2,
             ),
@@ -562,7 +559,7 @@ class _CtrlTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: accent.withOpacity( 0.15),
+                  color: accent.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, color: accent, size: 24),
@@ -595,8 +592,6 @@ class _CtrlTile extends StatelessWidget {
   }
 }
 
-// ─── Version Footer ────────────────────────────────────────────────────────
-
 class VersionFooter extends StatelessWidget {
   const VersionFooter({super.key});
 
@@ -623,4 +618,3 @@ class VersionFooter extends StatelessWidget {
     );
   }
 }
-

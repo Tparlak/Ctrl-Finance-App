@@ -39,16 +39,41 @@ class DashboardScreen extends ConsumerWidget {
     final categoryMap = {for (final c in categories) c.id: c};
     final accountMap = {for (final a in accounts) a.id: a};
 
-    return Stack(
-      children: [
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
         CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  SafeArea(
+                    bottom: false,
+                    child: Row(
+                      children: [
+                        Builder(
+                          builder: (ctx) => IconButton(
+                            icon: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.glassBg,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.glassBorder),
+                              ),
+                              child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
+                            ),
+                            onPressed: () => Scaffold.of(ctx).openDrawer(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   if (upcomingCount > 0) ...[
                     UpcomingPaymentBanner(
                       count: upcomingCount,
@@ -250,26 +275,6 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
-        // Menu Button
-        Positioned(
-          top: 10,
-          left: 10,
-          child: SafeArea(
-            child: Builder(
-              builder: (ctx) => IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.glassBg,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.glassBorder),
-                  ),
-                  child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
-                ),
-                onPressed: () => Scaffold.of(ctx).openDrawer(),
-              ),
-            ),
-          ),
         ),
       ],
     );

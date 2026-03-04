@@ -33,7 +33,8 @@ class _CarLedgerScreenState extends ConsumerState<CarLedgerScreen> {
     final fmt = NumberFormat('#,##0.00', 'tr_TR');
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

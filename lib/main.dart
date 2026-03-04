@@ -28,6 +28,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'data/services/notification_service.dart';
 import 'data/services/home_widget_service.dart';
 import 'data/services/permission_service.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
 Future<void> main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +50,7 @@ Future<void> main() async {
 
   try {
     await Hive.initFlutter();
+    tz.initializeTimeZones();
     await HiveBoxes.openAll();
     await initializeDateFormatting('tr_TR', null);
     if (!kIsWeb) {
@@ -216,7 +218,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -325,7 +327,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         statusBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         extendBodyBehindAppBar: true,
         extendBody: true,
         drawer: const AppDrawer(),

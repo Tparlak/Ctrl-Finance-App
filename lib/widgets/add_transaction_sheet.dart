@@ -153,22 +153,27 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
   }
 
   Future<void> _submit() async {
-    final amount = double.tryParse(_amountController.text.replaceAll(',', '.'));
+  try {
+    final amountText = _amountController.text.trim().replaceAll(',', '.');
+    final amount = double.tryParse(amountText);
+    
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Geçerli bir tutar giriniz.')),
+        const SnackBar(content: Text('Lütfen geçerli bir tutar giriniz.')),
       );
       return;
     }
+    
     if (_fromAccountId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hesap seçiniz.')),
+        const SnackBar(content: Text('Lütfen bir hesap seçiniz.')),
       );
       return;
     }
+    
     if (_tab == 2 && _toAccountId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hedef hesap seçiniz.')),
+        const SnackBar(content: Text('Lütfen hedef hesap seçiniz.')),
       );
       return;
     }
@@ -191,7 +196,18 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
         );
 
     if (mounted) Navigator.of(context).pop();
+  } catch (e) {
+    debugPrint('Submit Error: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Hata: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
+}
 
   String get _actionLabel {
     switch (_tab) {

@@ -26,7 +26,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     final notes = ref.watch(notesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

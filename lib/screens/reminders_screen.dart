@@ -30,7 +30,8 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
     ref.watch(remindersProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
