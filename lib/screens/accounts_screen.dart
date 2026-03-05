@@ -950,10 +950,13 @@ class AccountDetailScreen extends ConsumerWidget {
     final accounts = ref.watch(accountProvider);
     ref.watch(transactionProvider);
 
+    return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      // Removed extendBodyBehindAppBar: true to prevent content overlap with AppBar
+      extendBodyBehindAppBar: false,
       appBar: AppBar(
         title: Text(account.name),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.of(context).pop(),
