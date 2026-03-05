@@ -262,15 +262,16 @@ class OcrService {
         }
       }
 
-      // Fallback plain: "Product Name  34,90"
+      // Fallback plain: "Product Name  34,90" or "Product Name 102,27 TL"
       final plainPattern = RegExp(
-        r'^([A-ZÇĞİÖŞÜa-zçğışöü0-9\s./%-]{3,40}?)\s+\*?(\d{1,5}[.,]\d{2})\s*$',
+        r'^([A-ZÇĞİÖŞÜa-zçğışöü0-9\s./%&-]{2,40}?)\s+[*]?(\d{1,6}[.,]\d{2})(?:\s*TL|\s*₺|\s|%|$)',
+        caseSensitive: false,
       );
       final pm = plainPattern.firstMatch(line);
       if (pm != null) {
         final name = pm.group(1)!.trim();
         final price = _parseAmount(pm.group(2)!);
-        if (price != null && price > 0 && name.length >= 3 && !_noiseRegex.hasMatch(name)) {
+        if (price != null && price > 0 && name.length >= 2 && !_noiseRegex.hasMatch(name)) {
           items.add(ReceiptItem(name: name, price: price));
         }
       }

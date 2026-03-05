@@ -950,9 +950,8 @@ class AccountDetailScreen extends ConsumerWidget {
     final accounts = ref.watch(accountProvider);
     ref.watch(transactionProvider);
 
-    return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      extendBodyBehindAppBar: true,
+      // Removed extendBodyBehindAppBar: true to prevent content overlap with AppBar
       appBar: AppBar(
         title: Text(account.name),
         leading: IconButton(
@@ -966,6 +965,7 @@ class AccountDetailScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: GlassCard(
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                 child: Column(
                   children: [
                     Text(

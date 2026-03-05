@@ -219,11 +219,18 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
         if (result.amount != null) {
           _amountController.text = result.amount!.toStringAsFixed(2).replaceAll('.', ',');
         }
-        // Description: fuel → litre+price already in merchantName; market single item → item name + price
+        // Description: fuel → litre+price already in merchantName
+        // Market → Merchant Name + Item List (name | price)
         if (_descController.text.isEmpty) {
-          if (result.categoryHint == 'Market' && result.items.length == 1) {
-            final item = result.items.first;
-            _descController.text = '${item.name} - ${item.price.toStringAsFixed(2)} ₺';
+          if (result.categoryHint == 'Market') {
+            String desc = '';
+            if (result.merchantName != null && result.merchantName!.isNotEmpty) {
+              desc += '${result.merchantName}\n';
+            }
+            if (result.items.isNotEmpty) {
+              desc += result.items.map((i) => '${i.name} | ${i.price.toStringAsFixed(2)} ₺').join('\n');
+            }
+            _descController.text = desc.trim();
           } else if (result.merchantName != null) {
             _descController.text = result.merchantName!;
           }
