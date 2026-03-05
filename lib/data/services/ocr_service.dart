@@ -154,15 +154,29 @@ class OcrService {
   // ── TOTAL ─────────────────────────────────────────────────────────────────
 
   static double? _extractTotal(String text) {
-    // Primary: look for explicit TOPLAM / TUTAR label
-    final r = RegExp(
-      r'(?:TOPLAM|TUTAR|GENEL\s*TOP|TOP\.)[^\d]*(\d{1,6}[.,]\d{2})',
+    // Primary: search every TOPLAM *price occurrence — first valid one wins.
+    // This avoids confusing the KDV tax block at the bottom of Turkish receipts.
+    final toplam = RegExp(
+      r'TOPLAM\s*[*]?\s*(\d{1,6}[.,]\d{2})',
       caseSensitive: false,
     );
-    final m = r.firstMatch(text);
-    if (m != null) return _parseAmount(m.group(1)!);
+    for (final m in toplam.allMatches(text)) {
+      final val = _parseAmount(m.group(1)!);
+      if (val != null && val > 0) return val;
+    }
 
-    // Fallback: largest number in receipt
+    // Second chance: broader TUTAR / GENEL TOP label
+    final broader = RegExp(
+      r'(?:TUTAR|GENEL\s*TOP|TOP\.)[^\d]*(\d{1,6}[.,]\d{2})',
+      caseSensitive: false,
+    );
+    final m2 = broader.firstMatch(text);
+    if (m2 != null) {
+      final val = _parseAmount(m2.group(1)!);
+      if (val != null && val > 0) return val;
+    }
+
+    // Last resort: largest number in receipt
     final all = RegExp(r'\b\d{1,6}[.,]\d{2}\b')
         .allMatches(text)
         .map((m) => _parseAmount(m.group(0)!) ?? 0.0)
@@ -208,11 +222,22 @@ class OcrService {
 
   // ── MERCHANT ─────────────────────────────────────────────────────────────
 
-  static String? _extractMerchant(String text) {
-    return text.split('\n')
+  static String _extractMerchant(String text) {
+    // Skip common receipt noise on the first lines of Turkish receipts:
+    // "*TEŞEKKÜR EDERİZ*", website URLs, and lines starting with *.
+    final skipPattern = RegExp(
+      r'TE[ŞS]EKK[ÜU]R|TESEKKUR|WWW\.|HTTP|^\*',
+      caseSensitive: false,
+    );
+    final candidates = text
+        .split('\n')
         .map((l) => l.trim())
-        .where((l) => l.isNotEmpty && l.length > 3)
-        .firstOrNull;
+        .where((l) => l.length > 3)
+        .take(5);
+    for (final line in candidates) {
+      if (!skipPattern.hasMatch(line)) return line;
+    }
+    return 'Market Alışverişi';
   }
 
   // ── ACCOUNT HINT ─────────────────────────────────────────────────────────
@@ -246,15 +271,31 @@ class OcrService {
       if (_noiseRegex.hasMatch(line)) continue;
       if (line.length < 5) continue;
 
-      // Try pattern: "Product Name  Qty x UnitPrice  Total"
+      // ── Pattern 1 (Turkish grocery format): "NAME %TaxRate *Price"
+      // e.g. "KENT SWITCH %00 *105,00"  or  "DURU BAK. BULGUR 1 %01 *64,95"
+      final trPattern = RegExp(
+        r'^([A-ZÇĞİÖŞÜa-zçğışöü0-9\s./%&\-]{2,45}?)\s+%\d{1,2}\s+[*](\d{1,6}[.,]\d{2})',
+        caseSensitive: false,
+      );
+      final trm = trPattern.firstMatch(line);
+      if (trm != null) {
+        final name  = trm.group(1)!.trim();
+        final price = _parseAmount(trm.group(2)!);
+        if (price != null && price > 0 && name.length >= 2 && !_noiseRegex.hasMatch(name)) {
+          items.add(ReceiptItem(name: name, price: price));
+          continue;
+        }
+      }
+
+      // ── Pattern 2: "Product Name  Qty x UnitPrice"
       // e.g. "SÜTTE ÖMER 2x 34,90  69,80"
       final qtyPattern = RegExp(
         r'^(.+?)\s+(\d{1,3})[xX]\s*(\d{1,5}[.,]\d{2})',
       );
       final qm = qtyPattern.firstMatch(line);
       if (qm != null) {
-        final name = qm.group(1)!.trim();
-        final qty = int.tryParse(qm.group(2)!) ?? 1;
+        final name  = qm.group(1)!.trim();
+        final qty   = int.tryParse(qm.group(2)!) ?? 1;
         final unitP = _parseAmount(qm.group(3)!);
         if (unitP != null && unitP > 0 && name.length >= 3) {
           items.add(ReceiptItem(name: name, price: unitP * qty));
@@ -262,14 +303,14 @@ class OcrService {
         }
       }
 
-      // Fallback plain: "Product Name  34,90" or "Product Name 102,27 TL"
+      // ── Pattern 3 (plain fallback): "Product Name  34,90" or "… 102,27 TL"
       final plainPattern = RegExp(
         r'^([A-ZÇĞİÖŞÜa-zçğışöü0-9\s./%&-]{2,40}?)\s+[*]?(\d{1,6}[.,]\d{2})(?:\s*TL|\s*₺|\s|%|$)',
         caseSensitive: false,
       );
       final pm = plainPattern.firstMatch(line);
       if (pm != null) {
-        final name = pm.group(1)!.trim();
+        final name  = pm.group(1)!.trim();
         final price = _parseAmount(pm.group(2)!);
         if (price != null && price > 0 && name.length >= 2 && !_noiseRegex.hasMatch(name)) {
           items.add(ReceiptItem(name: name, price: price));
