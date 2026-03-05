@@ -104,7 +104,7 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
 
   static ThemeState _loadInitialState() {
     final savedVariantStr = HiveBoxes.settings.get('appTheme', defaultValue: 'gold') as String;
-    final savedModeStr = HiveBoxes.settings.get('themeMode', defaultValue: 'system') as String;
+    final savedModeStr = HiveBoxes.settings.get('themeMode', defaultValue: 'dark') as String;
 
     final variant = AppThemeVariant.values.firstWhere(
       (e) => e.name == savedVariantStr,

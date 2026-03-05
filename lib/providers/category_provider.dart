@@ -10,16 +10,12 @@ final categoryProvider = Provider<List<CategoryModel>>((ref) {
 
 /// Only expense categories
 final expenseCategoryProvider = Provider<List<CategoryModel>>((ref) {
-  return HiveBoxes.categories.values
-      .where((c) => c.type == 'expense')
-      .toList();
+  return ref.watch(categoryProvider);
 });
 
 /// Only income categories
 final incomeCategoryProvider = Provider<List<CategoryModel>>((ref) {
-  return HiveBoxes.categories.values
-      .where((c) => c.type == 'income')
-      .toList();
+  return ref.watch(categoryProvider);
 });
 
 /// Only top-level categories (no parent)

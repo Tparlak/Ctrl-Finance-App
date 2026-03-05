@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,22 +33,28 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_ios_rounded, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Notlarım', style: GoogleFonts.poppins(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+        title: Text('Notlarım', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w700)),
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.black.withValues(alpha: 0.3)),
+          ),
+        ),
       ),
       body: notes.isEmpty
           ? Center(child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.sticky_note_2_outlined, size: 64, color: AppColors.textSecondary.withOpacity( 0.5)),
+                Icon(Icons.sticky_note_2_outlined, size: 64, color: (Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey).withOpacity(0.5)),
                 const SizedBox(height: 12),
-                Text('Henüz not yok', style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 14)),
+                Text('Henüz not yok', style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 14)),
               ],
             ))
           : Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + kToolbarHeight + 8, 16, 16),
               child: _buildGrid(context, notes),
             ),
       floatingActionButton: FloatingActionButton(
@@ -109,7 +116,7 @@ class _NoteCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity( 0.08)),
+          border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.white.withOpacity(0.08)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,7 +158,7 @@ class _NoteCard extends StatelessWidget {
   void _showMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E2E),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -160,14 +167,14 @@ class _NoteCard extends StatelessWidget {
           children: [
             ListTile(
               leading: Icon(note.isPinned ? Icons.push_pin_outlined : Icons.push_pin_rounded,
-                  color: AppColors.gold),
+                  color: Theme.of(context).colorScheme.onSurface),
               title: Text(note.isPinned ? 'Sabiti Kaldır' : 'Sabitle',
-                  style: GoogleFonts.poppins(color: AppColors.textPrimary)),
+                  style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface)),
               onTap: () { Navigator.pop(context); onPin(); },
             ),
             ListTile(
-              leading: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
-              title: Text('Sil', style: GoogleFonts.poppins(color: AppColors.red)),
+              leading: Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.error),
+              title: Text('Sil', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.error)),
               onTap: () { Navigator.pop(context); onDelete(); },
             ),
           ],
@@ -276,7 +283,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
   void _showColorPicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E1E2E),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => Padding(
         padding: const EdgeInsets.all(20),

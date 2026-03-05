@@ -34,10 +34,10 @@ class AppThemeTokens {
   static const light = AppThemeTokens(
     background: Color(0xFFF5F6FA),
     surface: Color(0xFFFFFFFF),
-    textPrimary: Color(0xFF1E1E2C),
-    textSecondary: Color(0xFF6B6E80),
-    glassBg: Color(0x0D000000), // very light dark shade for glass in light mode
-    glassBorder: Color(0x1A000000),
+    textPrimary: Color(0xFF111111), // Pure black for max contrast
+    textSecondary: Color(0xFF444444), // Dark grey
+    glassBg: Color(0x1A000000), // Slightly darker glass for visibility
+    glassBorder: Color(0x33000000), // More visible border
     brightness: Brightness.light,
   );
 }

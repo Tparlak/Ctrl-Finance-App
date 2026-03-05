@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/hive_boxes.dart';
 import '../theme/app_colors.dart';
@@ -17,13 +18,36 @@ import '../providers/category_provider.dart';
 import '../providers/fixed_expense_provider.dart';
 import 'category_manager_screen.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/bounce_tap.dart';
 
-class CtrlCenterScreen extends ConsumerWidget {
+class CtrlCenterScreen extends ConsumerStatefulWidget {
   const CtrlCenterScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CtrlCenterScreen> createState() => _CtrlCenterScreenState();
+}
+
+class _CtrlCenterScreenState extends ConsumerState<CtrlCenterScreen> {
+  String _userName = 'VIP Kullanıcı';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString('userName') ?? '';
+    if (mounted && name.isNotEmpty) {
+      setState(() => _userName = name);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeState = ref.watch(themeProvider);
+    final initial = _userName.isNotEmpty ? _userName[0].toUpperCase() : 'C';
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBodyBehindAppBar: true,
@@ -45,9 +69,9 @@ class CtrlCenterScreen extends ConsumerWidget {
                             icon: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.glassBg,
+                                color: Theme.of(context).inputDecorationTheme.fillColor,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.glassBorder),
+                                border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
                               ),
                               child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
                             ),
@@ -80,9 +104,9 @@ class CtrlCenterScreen extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Text(
-                                'T',
+                                initial,
                                 style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.w800,
@@ -97,16 +121,16 @@ class CtrlCenterScreen extends ConsumerWidget {
                               Text(
                                 'VIP KULLANICI',
                                 style: GoogleFonts.poppins(
-                                  color: AppColors.textSecondary,
+                                  color: Theme.of(context).textTheme.bodySmall?.color,
                                   fontSize: 10,
                                   letterSpacing: 2,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               Text(
-                                'Taner',
+                                _userName,
                                 style: GoogleFonts.poppins(
-                                  color: AppColors.textPrimary,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -145,7 +169,7 @@ class CtrlCenterScreen extends ConsumerWidget {
                       Text(
                         'CTRL CENTER',
                         style: GoogleFonts.poppins(
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 2,
@@ -203,7 +227,7 @@ class CtrlCenterScreen extends ConsumerWidget {
                                 backgroundColor: Colors.transparent,
                                 elevation: 0,
                                 leading: IconButton(
-                                  icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary),
+                                  icon: Icon(Icons.arrow_back_ios_rounded, color: Theme.of(context).colorScheme.onSurface),
                                   onPressed: () => Navigator.pop(context),
                                 ),
                               ),
@@ -264,7 +288,7 @@ class CtrlCenterScreen extends ConsumerWidget {
                               Text(
                                 'github.com/Tparlak/Ctrl-Finance-App',
                                 style: GoogleFonts.poppins(
-                                  color: AppColors.textSecondary,
+                                  color: Theme.of(context).textTheme.bodySmall?.color,
                                   fontSize: 11,
                                   decoration: TextDecoration.underline,
                                 ),
@@ -287,7 +311,7 @@ class CtrlCenterScreen extends ConsumerWidget {
 
   void _showComingSoon(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature yakında geliyor!'), backgroundColor: AppColors.surface),
+      SnackBar(content: Text('$feature yakında geliyor!'), backgroundColor: Theme.of(context).colorScheme.surface),
     );
   }
 
@@ -298,21 +322,21 @@ class CtrlCenterScreen extends ConsumerWidget {
     await showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Güvenlik Kilidi', style: GoogleFonts.poppins(color: AppColors.textPrimary)),
+        title: Text('Güvenlik Kilidi', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface)),
         content: TextField(
           controller: ctrl,
           keyboardType: TextInputType.number,
           maxLength: 4,
           obscureText: true,
-          style: GoogleFonts.poppins(color: AppColors.textPrimary, letterSpacing: 8),
+          style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, letterSpacing: 8),
           decoration: const InputDecoration(labelText: '4 Haneli PIN (Kapatmak için boş bırakın)'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('İPTAL', style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+            child: Text('İPTAL', style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -469,7 +493,7 @@ class CtrlCenterScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           'Tüm Verileri Sıfırla',
@@ -477,13 +501,13 @@ class CtrlCenterScreen extends ConsumerWidget {
         ),
         content: Text(
           'Tüm işlem, hesap, kategori ve sabit gider verileri kalıcı olarak silinecek. Bu işlem geri alınamaz.',
-          style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13),
+          style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text('VAZGEÇ',
-                style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+                style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color)),
           ),
           TextButton(
             onPressed: () async {
@@ -538,7 +562,7 @@ class _CtrlTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return BounceTap(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
@@ -569,7 +593,7 @@ class _CtrlTile extends StatelessWidget {
               Text(
                 title,
                 style: GoogleFonts.poppins(
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1,
@@ -579,7 +603,7 @@ class _CtrlTile extends StatelessWidget {
               Text(
                 subtitle,
                 style: GoogleFonts.poppins(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                   fontSize: 10,
                 ),
                 maxLines: 2,

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -36,20 +37,26 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_ios_rounded, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Hatırlatıcılar', style: GoogleFonts.poppins(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+        title: Text('Hatırlatıcılar', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w700)),
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.black.withValues(alpha: 0.3)),
+          ),
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+        padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + kToolbarHeight + 10, 16, 80),
         children: [
           if (upcoming.isNotEmpty) ...[
             _sectionHeader('YAKLAŞAN', AppColors.green),
             ...upcoming.map((r) => _ReminderTile(r, notifier)),
           ],
           if (past.isNotEmpty) ...[
-            _sectionHeader('GEÇMİŞ', AppColors.textSecondary),
+            _sectionHeader('GEÇMİŞ', Theme.of(context).textTheme.bodySmall?.color ?? AppColors.textSecondary),
             ...past.map((r) => _ReminderTile(r, notifier)),
           ],
           if (upcoming.isEmpty && past.isEmpty)
@@ -57,9 +64,9 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(top: 80),
                 child: Column(children: [
-                  Icon(Icons.alarm_outlined, size: 64, color: AppColors.textSecondary.withOpacity( 0.4)),
-                  const SizedBox(height: 12),
-                  Text('Henüz hatırlatıcı yok', style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+                   Icon(Icons.alarm_outlined, size: 64, color: (Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey).withOpacity(0.4)),
+                   const SizedBox(height: 12),
+                   Text('Henüz hatırlatıcı yok', style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color)),
                 ]),
               ),
             ),
@@ -122,22 +129,22 @@ class _ReminderTile extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(
-          color: AppColors.glassBg,
+          color: Theme.of(context).inputDecorationTheme.fillColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.glassBorder),
+          border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
         ),
         child: Row(
           children: [
-            Icon(Icons.alarm_rounded, color: r.isActive ? AppColors.gold : AppColors.textSecondary, size: 24),
+            Icon(Icons.alarm_rounded, color: r.isActive ? AppColors.gold : Theme.of(context).textTheme.bodySmall?.color, size: 24),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(r.title, style: GoogleFonts.poppins(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
-                  Text(fmt.format(r.scheduledTime), style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 11)),
+                  Text(r.title, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600, fontSize: 13)),
+                  Text(fmt.format(r.scheduledTime), style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 11)),
                   if (r.note != null)
-                    Text(r.note!, style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(r.note!, style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
@@ -171,21 +178,21 @@ class _AddReminderSheetState extends ConsumerState<_AddReminderSheet> {
     return Container(
       margin: EdgeInsets.only(bottom: kb),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      decoration: const BoxDecoration(
-        color: Color(0xFF15161B),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade700, borderRadius: BorderRadius.circular(2)))),
+          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Theme.of(context).dividerTheme.color ?? Colors.grey, borderRadius: BorderRadius.circular(2)))),
           const SizedBox(height: 16),
-          Text('Hatırlatıcı Ekle', style: GoogleFonts.poppins(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+          Text('Hatırlatıcı Ekle', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w700, fontSize: 16)),
           const SizedBox(height: 16),
           TextFormField(
             controller: _titleC,
-            style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 14),
-            decoration: _inputDeco('Başlık *'),
+            style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
+            decoration: _inputDeco('Başlık *', context),
           ),
           const SizedBox(height: 10),
           Row(children: [
@@ -203,18 +210,18 @@ class _AddReminderSheetState extends ConsumerState<_AddReminderSheet> {
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
             value: _repeat,
-            dropdownColor: const Color(0xFF1E1E2E),
-            style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 13),
-            decoration: _inputDeco('Tekrar'),
+            dropdownColor: Theme.of(context).colorScheme.surface,
+            style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
+            decoration: _inputDeco('Tekrar', context),
             items: ['Yok','Günlük','Haftalık','Aylık'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
             onChanged: (v) => setState(() => _repeat = v!),
           ),
           const SizedBox(height: 10),
           TextFormField(
             controller: _noteC,
-            style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 14),
+            style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
             maxLines: 2,
-            decoration: _inputDeco('Not (İsteğe bağlı)'),
+            decoration: _inputDeco('Not (İsteğe bağlı)', context),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -248,14 +255,14 @@ class _AddReminderSheetState extends ConsumerState<_AddReminderSheet> {
     );
   }
 
-  InputDecoration _inputDeco(String hint) => InputDecoration(
+  InputDecoration _inputDeco(String hint, BuildContext context) => InputDecoration(
     hintText: hint,
-    hintStyle: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13),
+    hintStyle: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13),
     filled: true,
-    fillColor: AppColors.glassBg,
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.glassBorder)),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.glassBorder)),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.gold, width: 1.5)),
+    fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).dividerTheme.color ?? Colors.transparent)),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).dividerTheme.color ?? Colors.transparent)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.gold, width: 1.5)),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
   );
 }
@@ -273,14 +280,14 @@ class _DateTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.glassBg,
+          color: Theme.of(context).inputDecorationTheme.fillColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.glassBorder),
+          border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
         ),
         child: Row(children: [
           Icon(icon, color: AppColors.gold, size: 16),
           const SizedBox(width: 8),
-          Text(label, style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 13)),
+          Text(label, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 13)),
         ]),
       ),
     );

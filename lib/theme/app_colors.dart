@@ -42,4 +42,8 @@ class AppColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  // Global Easing Standards
+  static const Duration kVipDuration = Duration(milliseconds: 350);
+  static const Curve kVipCurve = Curves.easeOutCubic;
 }

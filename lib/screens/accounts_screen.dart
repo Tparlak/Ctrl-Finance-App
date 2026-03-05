@@ -15,12 +15,36 @@ import '../widgets/add_transaction_sheet.dart';
 import '../models/category_model.dart';
 import '../providers/category_provider.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/bounce_tap.dart';
 
-class AccountsScreen extends ConsumerWidget {
+class AccountsScreen extends ConsumerStatefulWidget {
   const AccountsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AccountsScreen> createState() => _AccountsScreenState();
+}
+
+class _AccountsScreenState extends ConsumerState<AccountsScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _entryController;
+
+  @override
+  void initState() {
+    super.initState();
+    _entryController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _entryController.forward();
+  }
+
+  @override
+  void dispose() {
+    _entryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final accounts = ref.watch(accountProvider);
 
     // ── Net Durum hesaplama ──────────────────────────────────────────────────
@@ -59,7 +83,6 @@ class AccountsScreen extends ConsumerWidget {
     addGroup('NAKİT', AppColors.green, cash);
     addGroup('BANKA HESAPLARI', AppColors.blue, banks);
     addGroup('KREDİ KARTLARI', AppColors.red, cards);
-    items.add({'type': 'addBtn'});
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -68,188 +91,226 @@ class AccountsScreen extends ConsumerWidget {
       body: Stack(
         children: [
           CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-                child: SafeArea(
-                  bottom: false,
-                  child: Row(
-                    children: [
-                      Builder(
-                        builder: (ctx) => IconButton(
-                          icon: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.glassBg,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.glassBorder),
-                            ),
-                            child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
-                          ),
-                          onPressed: () => Scaffold.of(ctx).openDrawer(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          // ── Başlık ─────────────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'HESAPLAR',
-                    style: GoogleFonts.poppins(
-                      color: AppColors.textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  Text(
-                    '${accounts.length} hesap',
-                    style: GoogleFonts.poppins(
-                        color: AppColors.textSecondary, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Net Durum Glassmorphism Kartı ──────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: GlassCard(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'NET DURUM',
-                      style: GoogleFonts.poppins(
-                        color: AppColors.textSecondary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Row(
                       children: [
-                        // ── Mini bar ────────────────────────────────────────
-                        SizedBox(
-                          width: 12,
-                          height: 80,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Stack(
-                              alignment: Alignment.bottomCenter,
-                              children: [
-                                // Background (debt)
-                                Container(
-                                  color:
-                                      AppColors.red.withOpacity( 0.25),
-                                ),
-                                // Asset portion
-                                FractionallySizedBox(
-                                  heightFactor: assetRatio.clamp(0.0, 1.0),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      gradient: AppColors.greenGradient,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                        Builder(
+                          builder: (ctx) => IconButton(
+                            icon: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).inputDecorationTheme.fillColor,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
+                              ),
+                              child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // ── Sayılar ─────────────────────────────────────────
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _NetRow(
-                                label: 'Varlıklar',
-                                amount: totalAssets,
-                                color: AppColors.green,
-                                icon: Icons.account_balance_rounded,
-                              ),
-                              const SizedBox(height: 8),
-                              _NetRow(
-                                label: 'Borçlar',
-                                amount: -totalDebts,
-                                color: AppColors.red,
-                                icon: Icons.credit_card_rounded,
-                              ),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 8),
-                                child: Divider(
-                                    color: AppColors.glassBorder, height: 1),
-                              ),
-                              _NetRow(
-                                label: 'Net Durum',
-                                amount: netWorth,
-                                color: AppColors.gold,
-                                icon: Icons.auto_graph_rounded,
-                                large: true,
-                              ),
-                            ],
+                            onPressed: () => Scaffold.of(ctx).openDrawer(),
                           ),
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-
-          // ── Gruplu Hesap Listesi ───────────────────────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (_, i) {
-                  final item = items[i];
-
-                  if (item['type'] == 'header') {
-                    return _GroupHeader(
-                      label: item['label'] as String,
-                      color: item['color'] as Color,
+              // ── Başlık ─────────────────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: AnimatedBuilder(
+                  animation: _entryController,
+                  builder: (context, child) {
+                    final anim = CurvedAnimation(
+                      parent: _entryController,
+                      curve: const Interval(0.0, 0.5, curve: AppColors.kVipCurve),
                     );
-                  }
-
-                  if (item['type'] == 'addBtn') {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8, bottom: 24),
-                      child: _AddAccountButton(),
+                    return FadeTransition(
+                      opacity: anim,
+                      child: Transform.translate(
+                        offset: Offset(0, 20 * (1 - anim.value)),
+                        child: child,
+                      ),
                     );
-                  }
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _AccountCard(account: item['account'] as Account),
-                  );
-                },
-                childCount: items.length,
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'HESAPLAR',
+                              style: GoogleFonts.poppins(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                            Text(
+                              '${accounts.length} hesap',
+                              style: GoogleFonts.poppins(
+                                  color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            _showAddAccountSheet(context, ref);
+                          },
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.gold.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.gold.withOpacity(0.3)),
+                            ),
+                            child: const Icon(Icons.add_rounded, color: AppColors.gold, size: 24),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
+              // ── Net Durum Glassmorphism Kartı ──────────────────────────────────
+              SliverToBoxAdapter(
+                child: AnimatedBuilder(
+                  animation: _entryController,
+                  builder: (context, child) {
+                    final anim = CurvedAnimation(
+                      parent: _entryController,
+                      curve: const Interval(0.2, 0.7, curve: AppColors.kVipCurve),
+                    );
+                    return FadeTransition(
+                      opacity: anim,
+                      child: Transform.translate(
+                        offset: Offset(0, 30 * (1 - anim.value)),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    child: GlassCard(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'NET DURUM',
+                            style: GoogleFonts.poppins(
+                              color: Theme.of(context).textTheme.bodySmall?.color,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              // ── Mini bar ────────────────────────────────────────
+                              SizedBox(
+                                width: 12,
+                                height: 80,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Stack(
+                                    alignment: Alignment.bottomCenter,
+                                    children: [
+                                      // Background (debt)
+                                      Container(
+                                        color:
+                                            AppColors.red.withOpacity(0.25),
+                                      ),
+                                      // Asset portion
+                                      FractionallySizedBox(
+                                        heightFactor: assetRatio.clamp(0.0, 1.0),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            gradient: AppColors.greenGradient,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              // ── Sayılar ─────────────────────────────────────────
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _NetRow(
+                                      label: 'Varlıklar',
+                                      amount: totalAssets,
+                                      color: AppColors.green,
+                                      icon: Icons.account_balance_rounded,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _NetRow(
+                                      label: 'Borçlar',
+                                      amount: -totalDebts,
+                                      color: AppColors.red,
+                                      icon: Icons.credit_card_rounded,
+                                    ),
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 8),
+                                      child: Divider(
+                                          color: AppColors.glassBorder, height: 1),
+                                    ),
+                                    _NetRow(
+                                      label: 'Net Durum',
+                                      amount: netWorth,
+                                      color: AppColors.gold,
+                                      icon: Icons.auto_graph_rounded,
+                                      large: true,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // ── Gruplu Hesap Listesi ───────────────────────────────────────────
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) {
+                      final item = items[i];
+                      if (item['type'] == 'header') {
+                        return _GroupHeader(
+                          label: item['label'] as String,
+                          color: item['color'] as Color,
+                        );
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _AccountCard(account: item['account'] as Account),
+                      );
+                    },
+                    childCount: items.length,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
-
-    ],
-  ),
-);
-}
+    );
+  }
 }
 
 // ─── Group Header ──────────────────────────────────────────────────────────
@@ -319,7 +380,7 @@ class _NetRow extends StatelessWidget {
           child: Text(
             label,
             style: GoogleFonts.poppins(
-              color: AppColors.textSecondary,
+              color: Theme.of(context).textTheme.bodySmall?.color,
               fontSize: large ? 12 : 11,
             ),
           ),
@@ -344,33 +405,36 @@ class _NetRow extends StatelessWidget {
 class _AddAccountButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return OutlinedButton(
-      onPressed: () => _showAddAccountSheet(context, ref),
-      style: OutlinedButton.styleFrom(
+    return BounceTap(
+      onTap: () => _showAddAccountSheet(context, ref),
+      child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        side: BorderSide(color: AppColors.gold.withOpacity( 0.6), width: 1.5),
-        backgroundColor: AppColors.gold.withOpacity( 0.1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.add_rounded, color: AppColors.gold),
-          const SizedBox(width: 8),
-          Text(
-            'HESAP EKLE',
-            style: GoogleFonts.poppins(
-              color: AppColors.gold,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
+        decoration: BoxDecoration(
+          color: AppColors.gold.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.gold.withOpacity(0.6), width: 1.5),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add_rounded, color: AppColors.gold),
+            const SizedBox(width: 8),
+            Text(
+              'HESAP EKLE',
+              style: GoogleFonts.poppins(
+                color: AppColors.gold,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
 
-  void _showAddAccountSheet(BuildContext context, WidgetRef ref) {
+void _showAddAccountSheet(BuildContext context, WidgetRef ref) {
     final ctrl = TextEditingController();
     String selectedType = 'BANK';
     bool includedInTotal = true;
@@ -548,7 +612,6 @@ class _AddAccountButton extends ConsumerWidget {
       },
     );
   }
-}
 
 // ─── Account Card with Swipe-to-Edit ─────────────────────────────────────────
 
@@ -632,7 +695,12 @@ class _AccountCardState extends ConsumerState<_AccountCard> {
                     onDelete: _confirmDelete,
                     onCancel: _cancelEditing,
                   )
-                : _NormalView(account: widget.account, onSwipe: _enterEditing),
+                : BounceTap(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => AccountDetailScreen(account: widget.account)),
+                    ),
+                    child: _NormalView(account: widget.account, onSwipe: _enterEditing),
+                  ),
       ),
     );
   }
@@ -657,85 +725,82 @@ class _NormalView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPositive = account.currentBalance >= 0;
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => AccountDetailScreen(account: account)),
-      ),
-      child: GlassCard(
+    return GlassCard(
         padding: const EdgeInsets.all(18),
         child: Stack(
           children: [
             Row(
               children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: isPositive
-                    ? AppColors.greenGradient
-                    : AppColors.redGradient,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Center(
-                child: Text(
-                  account.name.isNotEmpty ? account.name.substring(0, 1).toUpperCase() : 'A',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: isPositive
+                        ? AppColors.greenGradient
+                        : AppColors.redGradient,
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    account.name,
-                    style: GoogleFonts.poppins(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  child: Center(
+                    child: Text(
+                      account.name.isNotEmpty
+                          ? account.name.substring(0, 1).toUpperCase()
+                          : 'A',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                  Row(
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _getTypeLabel(account.type),
+                        account.name,
                         style: GoogleFonts.poppins(
-                            color: AppColors.textSecondary, fontSize: 11),
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      if (!account.isIncludedInTotal) ...[
-                        const SizedBox(width: 6),
-                        const Icon(Icons.visibility_off_rounded,
-                            color: AppColors.textSecondary, size: 12),
-                      ],
+                      Row(
+                        children: [
+                          Text(
+                            _getTypeLabel(account.type),
+                            style: GoogleFonts.poppins(
+                                color: AppColors.textSecondary, fontSize: 11),
+                          ),
+                          if (!account.isIncludedInTotal) ...[
+                            const SizedBox(width: 6),
+                            const Icon(Icons.visibility_off_rounded,
+                                color: AppColors.textSecondary, size: 12),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${NumberFormat('#,##0.00', 'tr_TR').format(account.currentBalance)} ${account.currency}',
+                      style: GoogleFonts.poppins(
+                        color: isPositive ? AppColors.green : AppColors.red,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right,
+                        color: AppColors.textSecondary, size: 18),
                 ],
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${NumberFormat('#,##0.00', 'tr_TR').format(account.currentBalance)} ${account.currency}',
-                  style: GoogleFonts.poppins(
-                    color: isPositive ? AppColors.green : AppColors.red,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const Icon(Icons.chevron_right,
-                    color: AppColors.textSecondary, size: 18),
-              ],
-            ),
-          ],
-        ),
-
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

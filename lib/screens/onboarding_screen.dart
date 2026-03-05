@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../data/services/permission_service.dart';
 import '../theme/app_colors.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -11,9 +12,15 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with TickerProviderStateMixin {
   final _controller = PageController();
   int _page = 0;
+  final _nameCtrl = TextEditingController();
+
+  // Avatar pulse animation for slide 4
+  late AnimationController _pulseController;
+  late Animation<double> _pulse;
 
   final _slides = const [
     _OnboardSlide(
@@ -34,17 +41,54 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       subtitle: 'Tüm banka hesaplarını, kredi kartlarını ve tasarruflarını tek ekranda gör.',
       accent: Color(0xFF00E676),
     ),
+    _OnboardSlide(
+      image: '', // handled specially in slide 4
+      title: 'Tanışalım!',
+      subtitle: 'Size nasıl hitap etmemizi istersiniz?',
+      accent: AppColors.gold,
+      isNameInput: true,
+    ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 1.0, end: 1.06).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
 
   @override
   void dispose() {
     _controller.dispose();
+    _nameCtrl.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
   Future<void> _finish() async {
+    // If on last slide and name is empty, warn
+    if (_page == _slides.length - 1 && _nameCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen isminizi giriniz.')),
+      );
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
     await prefs.setBool('isOnboardingDone', true);
+    final name = _nameCtrl.text.trim();
+    if (name.isNotEmpty) {
+      await prefs.setString('userName', name);
+    }
+    try {
+      await PermissionService.requestInitialPermissions();
+    } catch (_) {}
     widget.onDone();
   }
 
@@ -52,13 +96,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           PageView.builder(
             controller: _controller,
             itemCount: _slides.length,
             onPageChanged: (i) => setState(() => _page = i),
-            itemBuilder: (_, i) => _SlideWidget(slide: _slides[i]),
+            itemBuilder: (_, i) {
+              final slide = _slides[i];
+              if (slide.isNameInput) {
+                return _NameSlideWidget(
+                  slide: slide,
+                  nameCtrl: _nameCtrl,
+                  pulseAnimation: _pulse,
+                );
+              }
+              return _SlideWidget(slide: slide);
+            },
           ),
           // Bottom controls
           Positioned(
@@ -71,7 +126,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, AppColors.background],
+                  colors: [Colors.transparent, Theme.of(context).scaffoldBackgroundColor],
                 ),
               ),
               child: Column(
@@ -88,14 +143,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         width: active ? 24 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: active ? accent : AppColors.textSecondary.withOpacity( 0.4),
+                          color: active
+                              ? accent
+                              : (Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey)
+                                  .withOpacity(0.4),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       );
                     }),
                   ),
                   const SizedBox(height: 24),
-                  // Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -113,12 +170,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         backgroundColor: _slides[_page].accent,
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
                         elevation: 0,
                       ),
                       child: Text(
                         _page < _slides.length - 1 ? 'İLERLE' : 'BAŞLA',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 1.5),
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: 1.5),
                       ),
                     ),
                   ),
@@ -128,7 +187,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       onTap: _finish,
                       child: Text(
                         'Atla',
-                        style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13),
+                        style: GoogleFonts.poppins(
+                            color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13),
                       ),
                     ),
                 ],
@@ -141,13 +201,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
+// ── Model ─────────────────────────────────────────────────────────────────────
+
 class _OnboardSlide {
   final String image;
   final String title;
   final String subtitle;
   final Color accent;
-  const _OnboardSlide({required this.image, required this.title, required this.subtitle, required this.accent});
+  final bool isNameInput;
+  const _OnboardSlide({
+    required this.image,
+    required this.title,
+    required this.subtitle,
+    required this.accent,
+    this.isNameInput = false,
+  });
 }
+
+// ── Regular slide widget (slides 1-3) ─────────────────────────────────────────
 
 class _SlideWidget extends StatelessWidget {
   final _OnboardSlide slide;
@@ -158,99 +229,294 @@ class _SlideWidget extends StatelessWidget {
     final screenH = MediaQuery.of(context).size.height;
     final imgHeight = screenH * 0.42;
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // ── Image card ─────────────────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Stack(
-            children: [
-              Container(
-                width: double.infinity,
-                height: imgHeight,
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(32),
-                  border: Border.all(
-                    color: slide.accent.withOpacity( 0.35),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: slide.accent.withOpacity( 0.20),
-                      blurRadius: 40,
-                      offset: const Offset(0, 16),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(30),
-                  child: Image.asset(
-                    slide.image,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: imgHeight,
-                  ),
-                ),
-              ),
-              // Gradient fade from image bottom → background
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: imgHeight * 0.35,
-                child: Container(
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 60),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: imgHeight,
                   decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(30),
-                      bottomRight: Radius.circular(30),
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(
+                      color: slide.accent.withOpacity(0.35),
+                      width: 1.5,
                     ),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        AppColors.background,
-                      ],
+                    boxShadow: [
+                      BoxShadow(
+                        color: slide.accent.withOpacity(0.20),
+                        blurRadius: 40,
+                        offset: const Offset(0, 16),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: Image.asset(
+                      slide.image,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: imgHeight,
                     ),
                   ),
                 ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: imgHeight * 0.35,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Theme.of(context).scaffoldBackgroundColor,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              slide.title,
+              style: GoogleFonts.poppins(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
               ),
-            ],
-          ),
-        ),
-
-        // ── Text block — sits directly below the image ─────────────────────────
-        const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Text(
-            slide.title,
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
-        ),
-        const SizedBox(height: 10),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Text(
-            slide.subtitle,
-            style: GoogleFonts.poppins(
-              color: Colors.white.withOpacity( 0.55),
-              fontSize: 14,
-              height: 1.6,
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              slide.subtitle,
+              style: GoogleFonts.poppins(
+                color: (Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey).withOpacity(0.55),
+                fontSize: 14,
+                height: 1.6,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
-        ),
-      ],
+          const SizedBox(height: 120),
+        ],
+      ),
     );
   }
 }
 
+// ── Slide 4 — Name Input (matches card style of other slides) ─────────────────
 
+class _NameSlideWidget extends StatelessWidget {
+  final _OnboardSlide slide;
+  final TextEditingController nameCtrl;
+  final Animation<double> pulseAnimation;
+
+  const _NameSlideWidget({
+    required this.slide,
+    required this.nameCtrl,
+    required this.pulseAnimation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final screenH = MediaQuery.of(context).size.height;
+    final cardHeight = screenH * 0.42;
+    final accent = slide.accent;
+
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 60),
+
+          // ── Avatar card (same dimension as image card in other slides) ────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Container(
+              width: double.infinity,
+              height: cardHeight,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(color: accent.withOpacity(0.35), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: accent.withOpacity(0.20),
+                    blurRadius: 40,
+                    offset: const Offset(0, 16),
+                  ),
+                ],
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    accent.withOpacity(0.08),
+                    accent.withOpacity(0.03),
+                  ],
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Pulsing avatar circle
+                  ScaleTransition(
+                    scale: pulseAnimation,
+                    child: Container(
+                      width: 110,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            accent.withOpacity(0.25),
+                            accent.withOpacity(0.05),
+                          ],
+                        ),
+                        border: Border.all(color: accent.withOpacity(0.5), width: 2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '👋',
+                          style: const TextStyle(fontSize: 52),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Animated name preview
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: nameCtrl,
+                    builder: (_, value, __) {
+                      final name = value.text.trim();
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: name.isEmpty
+                            ? Text(
+                                'Merhaba!',
+                                key: const ValueKey('empty'),
+                                style: GoogleFonts.poppins(
+                                  color: accent.withOpacity(0.5),
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              )
+                            : Text(
+                                'Merhaba, $name!',
+                                key: ValueKey(name),
+                                style: GoogleFonts.poppins(
+                                  color: accent,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Seninle tanışmak güzel 🌟',
+                    style: GoogleFonts.poppins(
+                      color: (Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey)
+                          .withOpacity(0.5),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Title ──────────────────────────────────────────────────────────────
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              slide.title,
+              style: GoogleFonts.poppins(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              slide.subtitle,
+              style: GoogleFonts.poppins(
+                color: (Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey)
+                    .withOpacity(0.55),
+                fontSize: 14,
+                height: 1.6,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+
+          // ── Name TextField ─────────────────────────────────────────────────────
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: TextField(
+              controller: nameCtrl,
+              autofocus: false,
+              textAlign: TextAlign.center,
+              textCapitalization: TextCapitalization.words,
+              style: GoogleFonts.poppins(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Adınızı girin…',
+                hintStyle: GoogleFonts.poppins(
+                  color: (Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey)
+                      .withOpacity(0.4),
+                  fontSize: 15,
+                ),
+                filled: true,
+                fillColor: accent.withOpacity(0.06),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: accent.withOpacity(0.3)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: accent, width: 2),
+                ),
+                prefixIcon: Icon(Icons.person_outline_rounded, color: accent.withOpacity(0.7)),
+              ),
+            ),
+          ),
+
+          // Dynamic keyboard padding
+          SizedBox(
+            height: MediaQuery.of(context).viewInsets.bottom + 140,
+          ),
+        ],
+      ),
+    );
+  }
+}

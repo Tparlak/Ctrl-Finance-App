@@ -17,11 +17,34 @@ import '../utils/transaction_grouper.dart';
 import '../widgets/timeline_transaction_list.dart';
 import '../widgets/app_drawer.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _entryController;
+
+  @override
+  void initState() {
+    super.initState();
+    _entryController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _entryController.forward();
+  }
+
+  @override
+  void dispose() {
+    _entryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final balances = ref.watch(balancesByCurrencyProvider);
     final totalIncome = ref.watch(currentMonthIncomeProvider);
     final totalExpense = ref.watch(currentMonthExpenseProvider);
@@ -62,9 +85,9 @@ class DashboardScreen extends ConsumerWidget {
                                 icon: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: AppColors.glassBg,
+                                    color: Theme.of(context).inputDecorationTheme.fillColor,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: AppColors.glassBorder),
+                                    border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
                                   ),
                                   child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
                                 ),
@@ -82,71 +105,119 @@ class DashboardScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 20),
                       ],
-                      Text(
-                        'TOPLAM BAKIYE',
-                        style: GoogleFonts.poppins(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 3,
+                      AnimatedBuilder(
+                        animation: _entryController,
+                        builder: (context, child) {
+                          final anim = CurvedAnimation(
+                            parent: _entryController,
+                            curve: const Interval(0.0, 0.4, curve: AppColors.kVipCurve),
+                          );
+                          return FadeTransition(
+                            opacity: anim,
+                            child: Transform.translate(
+                              offset: Offset(0, 20 * (1 - anim.value)),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Text(
+                          'TOPLAM BAKIYE',
+                          style: GoogleFonts.poppins(
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 3,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 6),
-                      ShaderMask(
-                        shaderCallback: (bounds) =>
-                            AppColors.goldGradient.createShader(bounds),
-                        child: balances.isEmpty || balances.length == 1
-                            ? Text(
-                                balances.isEmpty
-                                    ? '0,00 ₺'
-                                    : '${NumberFormat('#,##0.00', 'tr_TR').format(balances.values.first)} ${balances.keys.first}',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 44,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.1,
+                      AnimatedBuilder(
+                        animation: _entryController,
+                        builder: (context, child) {
+                          final anim = CurvedAnimation(
+                            parent: _entryController,
+                            curve: const Interval(0.1, 0.5, curve: AppColors.kVipCurve),
+                          );
+                          return FadeTransition(
+                            opacity: anim,
+                            child: Transform.translate(
+                              offset: Offset(0, 20 * (1 - anim.value)),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: ShaderMask(
+                          shaderCallback: (bounds) =>
+                              AppColors.goldGradient.createShader(bounds),
+                          child: balances.isEmpty || balances.length == 1
+                              ? Text(
+                                  balances.isEmpty
+                                      ? '0,00 ₺'
+                                      : '${NumberFormat('#,##0.00', 'tr_TR').format(balances.values.first)} ${balances.keys.first}',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 44,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.1,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                )
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: balances.entries
+                                      .map((e) => Text(
+                                            '${NumberFormat('#,##0.00', 'tr_TR').format(e.value)} ${e.key}',
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.w800,
+                                              height: 1.2,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ))
+                                      .toList(),
                                 ),
-                                textAlign: TextAlign.center,
-                              )
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: balances.entries
-                                    .map((e) => Text(
-                                          '${NumberFormat('#,##0.00', 'tr_TR').format(e.value)} ${e.key}',
-                                          style: GoogleFonts.poppins(
-                                            color: Colors.white,
-                                            fontSize: 32,
-                                            fontWeight: FontWeight.w800,
-                                            height: 1.2,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ))
-                                    .toList(),
-                              ),
+                        ),
                       ),
                       const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _SummaryCard(
-                              label: 'TOPLAM GELİR',
-                              amount: totalIncome,
-                              gradient: AppColors.greenGradient,
-                              icon: Icons.arrow_downward_rounded,
-                              glowColor: AppColors.green,
+                      AnimatedBuilder(
+                        animation: _entryController,
+                        builder: (context, child) {
+                          final anim = CurvedAnimation(
+                            parent: _entryController,
+                            curve: const Interval(0.2, 0.6, curve: AppColors.kVipCurve),
+                          );
+                          return FadeTransition(
+                            opacity: anim,
+                            child: Transform.translate(
+                              offset: Offset(0, 20 * (1 - anim.value)),
+                              child: child,
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _SummaryCard(
-                              label: 'TOPLAM GİDER',
-                              amount: totalExpense,
-                              gradient: AppColors.redGradient,
-                              icon: Icons.arrow_upward_rounded,
-                              glowColor: AppColors.red,
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _SummaryCard(
+                                label: 'TOPLAM GELİR',
+                                amount: totalIncome,
+                                gradient: AppColors.greenGradient,
+                                icon: Icons.arrow_downward_rounded,
+                                glowColor: AppColors.green,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _SummaryCard(
+                                label: 'TOPLAM GİDER',
+                                amount: totalExpense,
+                                gradient: AppColors.redGradient,
+                                icon: Icons.arrow_upward_rounded,
+                                glowColor: AppColors.red,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 28),
                       if (marketItems.isNotEmpty) ...[
@@ -321,14 +392,14 @@ class _SummaryCard extends StatelessWidget {
                 children: [
                   Text(label,
                       style: GoogleFonts.poppins(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1)),
                   Text(
                     currencyFmt.format(amount),
                     style: GoogleFonts.poppins(
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                     ),
@@ -356,7 +427,7 @@ class _MonthFilterSelector extends ConsumerWidget {
     return Row(
       children: [
         IconButton(
-          icon: const Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary),
+          icon: Icon(Icons.chevron_left_rounded, color: Theme.of(context).textTheme.bodySmall?.color),
           onPressed: () {
             ref.read(selectedMonthProvider.notifier).state =
                 DateTime(selectedMonth.year, selectedMonth.month - 1);
@@ -365,13 +436,13 @@ class _MonthFilterSelector extends ConsumerWidget {
         Text(
           monthStr,
           style: GoogleFonts.poppins(
-            color: AppColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+          icon: Icon(Icons.chevron_right_rounded, color: Theme.of(context).textTheme.bodySmall?.color),
           onPressed: () {
             ref.read(selectedMonthProvider.notifier).state =
                 DateTime(selectedMonth.year, selectedMonth.month + 1);

@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import '../data/services/ocr_service.dart';
 import '../widgets/category_picker.dart';
 import '../data/models/receipt_item.dart';
+import '../widgets/bounce_tap.dart';
 
 void showAddTransactionSheet(BuildContext context, {int initialTab = 1}) {
   showModalBottomSheet(
@@ -87,8 +88,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
       builder: (_) => Container(
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF1E1E1E) : Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -100,12 +100,12 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
             const SizedBox(height: 8),
             ListTile(
               leading: const Text('📸', style: TextStyle(fontSize: 24)),
-              title: Text('Kameradan Çek', style: GoogleFonts.poppins(color: AppColors.textPrimary)),
+              title: Text('Kameradan Çek', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface)),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Text('🖼️', style: TextStyle(fontSize: 24)),
-              title: Text('Galeriden Seç', style: GoogleFonts.poppins(color: AppColors.textPrimary)),
+              title: Text('Galeriden Seç', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface)),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
             const SizedBox(height: 16),
@@ -121,25 +121,117 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
     setState(() => _isScanning = true);
     try {
       final result = await OcrService.scanImage(photo.path);
+
+      // ── Auto-select category ───────────────────────────────────────────────
+      String? autoCategoryId;
+      if (result.categoryHint != null) {
+        final categories = _tab == 0
+            ? ref.read(incomeCategoryProvider)
+            : ref.read(expenseCategoryProvider);
+        final hint = result.categoryHint!.toUpperCase();
+        final match = categories.where((c) {
+          final name = c.name.toUpperCase();
+          return name.contains(hint) ||
+              (hint == 'YAKIT' && name.contains('YAKIT')) ||
+              (hint == 'MARKET' && name.contains('MARKET'));
+        }).firstOrNull;
+        if (match != null) autoCategoryId = match.id;
+      }
+
+      // ── Auto-select account ────────────────────────────────────────────────
+      String? autoAccountId;
+      if (result.accountHint != null && result.accountHint!.isNotEmpty) {
+        final accounts = ref.read(accountProvider);
+        final match = accounts.where((a) =>
+          a.name.toUpperCase().contains(result.accountHint!.toUpperCase())).firstOrNull;
+        if (match != null) autoAccountId = match.id;
+      }
+
+      // ── If market with multiple items → offer multi-item dialog ────────────
+      if (result.categoryHint == 'Market' && result.items.length > 1) {
+        setState(() => _isScanning = false);
+        if (!mounted) return;
+        final addAll = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: Theme.of(ctx).cardColor,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text('${result.items.length} Ürün Bulundu',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 260,
+              child: Column(
+                children: [
+                  Text('Her ürünü ayrı işlem olarak eklemek ister misiniz?',
+                      style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textSecondary)),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: result.items.length,
+                      itemBuilder: (_, i) {
+                        final item = result.items[i];
+                        return ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.shopping_basket_outlined, color: AppColors.gold, size: 18),
+                          title: Text(item.name, style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textPrimary)),
+                          trailing: Text('${item.price.toStringAsFixed(2)} ₺',
+                              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.green)),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text('Tek İşlem', style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.gold, foregroundColor: Colors.black),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text('Hepsini Ekle', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+        );
+
+        if (addAll == true && mounted) {
+          await _addMultipleItemsAsTransactions(
+            items: result.items,
+            date: result.date ?? _selectedDate,
+            time: result.time ?? _selectedTime,
+            accountId: autoAccountId ?? _fromAccountId,
+            categoryId: autoCategoryId ?? _selectedCategoryId,
+            receiptImagePath: photo.path,
+          );
+          if (mounted) Navigator.of(context).pop();
+          return;
+        }
+      }
+
+      // ── Single transaction fill ────────────────────────────────────────────
       setState(() {
         _receiptImagePath = photo.path;
         _receiptItems = result.items;
         if (result.amount != null) {
           _amountController.text = result.amount!.toStringAsFixed(2).replaceAll('.', ',');
         }
-        if (result.merchantName != null && _descController.text.isEmpty) {
-          _descController.text = result.merchantName!;
+        // Description: fuel → litre+price already in merchantName; market single item → item name + price
+        if (_descController.text.isEmpty) {
+          if (result.categoryHint == 'Market' && result.items.length == 1) {
+            final item = result.items.first;
+            _descController.text = '${item.name} - ${item.price.toStringAsFixed(2)} ₺';
+          } else if (result.merchantName != null) {
+            _descController.text = result.merchantName!;
+          }
         }
         if (result.date != null) _selectedDate = result.date!;
         if (result.time != null) _selectedTime = result.time!;
-        
-        // Auto-select account from hint if match found
-        if (result.accountHint != null && result.accountHint!.isNotEmpty) {
-          final accounts = ref.read(accountProvider);
-          final match = accounts.where((a) => 
-            a.name.toUpperCase().contains(result.accountHint!.toUpperCase())).firstOrNull;
-          if (match != null) _fromAccountId = match.id;
-        }
+        if (autoCategoryId != null) _selectedCategoryId = autoCategoryId;
+        if (autoAccountId != null) _fromAccountId = autoAccountId;
       });
     } catch (e) {
       if (mounted) {
@@ -148,7 +240,40 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
         );
       }
     } finally {
-      setState(() => _isScanning = false);
+      if (mounted) setState(() => _isScanning = false);
+    }
+  }
+
+  /// Adds each receipt item as a separate expense transaction.
+  Future<void> _addMultipleItemsAsTransactions({
+    required List<ReceiptItem> items,
+    required DateTime date,
+    required TimeOfDay time,
+    String? accountId,
+    String? categoryId,
+    String? receiptImagePath,
+  }) async {
+    final fullDateTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    final notifier = ref.read(transactionProvider.notifier);
+    for (final item in items) {
+      await notifier.addTransaction(
+        amount: item.price,
+        type: 'expense',
+        fromAccountId: accountId ?? _fromAccountId ?? '',
+        categoryId: categoryId,
+        description: '${item.name} - ${item.price.toStringAsFixed(2)} ₺',
+        date: fullDateTime,
+        receiptImagePath: receiptImagePath,
+      );
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${items.length} ürün ayrı işlem olarak eklendi!', style: GoogleFonts.poppins()),
+          backgroundColor: AppColors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -258,7 +383,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
             onTap: () {
               showModalBottomSheet(
                 context: context,
-                backgroundColor: AppColors.background,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
@@ -273,9 +398,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: AppColors.glassBg,
+                color: Theme.of(context).inputDecorationTheme.fillColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.glassBorder),
+                border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -288,7 +413,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                         _selectedCategoryId == null 
                           ? 'Kategori Seç' 
                           : categories.firstWhere((c) => c.id == _selectedCategoryId, orElse: () => categories.first).name,
-                        style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 14),
+                        style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
                       ),
                     ],
                   ),
@@ -321,7 +446,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
         // Description
         TextField(
           controller: _descController,
-          style: GoogleFonts.poppins(color: AppColors.textPrimary),
+          style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface),
           decoration: const InputDecoration(
             labelText: 'Açıklama (opsiyonel)',
             prefixIcon:
@@ -370,9 +495,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
               Container(
                 height: 72,
                 decoration: BoxDecoration(
-                  color: AppColors.glassBg,
+                  color: Theme.of(context).inputDecorationTheme.fillColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.glassBorder),
+                  border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
                 ),
                 child: IconButton(
                   icon: _isScanning 
@@ -393,11 +518,11 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                 collapsedIconColor: AppColors.gold,
                 title: Text(
                   'Ürün Listesi (${_receiptItems.length})',
-                  style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w600),
                 ),
                 children: _receiptItems.map((item) => ListTile(
                   dense: true,
-                  title: Text(item.name, style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 12)),
+                  title: Text(item.name, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 12)),
                   trailing: Text(
                     '${item.price.toStringAsFixed(2)} ₺',
                     style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
@@ -413,16 +538,31 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
-      color: Colors.transparent,
-      child: DraggableScrollableSheet(
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutBack,
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 100 * (1 - value)),
+          child: Opacity(
+            opacity: value.clamp(0.0, 1.0),
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        color: Colors.transparent,
+        child: DraggableScrollableSheet(
         initialChildSize: 0.85,
         maxChildSize: 0.95,
         minChildSize: 0.5,
         builder: (_, scrollCtrl) => GlassCard(
           borderRadius: 24,
           blurSigma: 20,
-          backgroundColor: const Color(0xE6121214),
+          backgroundColor: Theme.of(context).brightness == Brightness.dark 
+              ? const Color(0xE6121214) 
+              : Colors.white.withOpacity(0.9),
           padding: EdgeInsets.fromLTRB(20, 8, 20, 20 + bottomPadding),
           child: ListView(
             controller: scrollCtrl,
@@ -442,7 +582,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
               Text(
                 'İŞLEM EKLE',
                 style: GoogleFonts.poppins(
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 2,
@@ -453,9 +593,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
               // Tab bar
               Container(
                 decoration: BoxDecoration(
-                  color: AppColors.glassBg,
+                  color: Theme.of(context).inputDecorationTheme.fillColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.glassBorder),
+                  border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
                 ),
                 child: TabBar(
                   controller: _tabController,
@@ -501,9 +641,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                         decoration: BoxDecoration(
-                          color: AppColors.glassBg,
+                          color: Theme.of(context).inputDecorationTheme.fillColor,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.glassBorder),
+                          border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
                         ),
                         child: Row(
                           children: [
@@ -513,7 +653,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                             Text(
                               DateFormat('dd MMM yyyy', 'tr_TR').format(_selectedDate),
                               style: GoogleFonts.poppins(
-                                  color: AppColors.textPrimary, fontSize: 13),
+                                  color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
                             ),
                           ],
                         ),
@@ -549,7 +689,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                           Text(
                             _selectedTime.format(context),
                             style: GoogleFonts.poppins(
-                                color: AppColors.textPrimary, fontSize: 13),
+                                color: Theme.of(context).colorScheme.onSurface, fontSize: 13),
                           ),
                         ],
                       ),
@@ -574,24 +714,32 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
 
               const SizedBox(height: 24),
               // Action button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _actionColor,
-                    foregroundColor: AppColors.background,
-                    shape: RoundedRectangleBorder(
+              BounceTap(
+                onTap: _submit,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: _actionColor,
                       borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _actionColor.withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
-                  ),
-                  child: Text(
-                    _actionLabel,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
+                    alignment: Alignment.center,
+                    child: Text(
+                      _actionLabel,
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -600,8 +748,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _AccountSelector extends StatelessWidget {

@@ -20,8 +20,7 @@ class CategoryManagerScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final allCats = ref.watch(categoryProvider);
-    final topLevelIncome = allCats.where((c) => c.type == 'income' && c.parentCategory == null).toList();
-    final topLevelExpense = allCats.where((c) => c.type == 'expense' && c.parentCategory == null).toList();
+    final topLevel = allCats.where((c) => c.parentCategory == null).toList();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -33,7 +32,7 @@ class CategoryManagerScreen extends ConsumerWidget {
               child: Text(
                 'KATEGORİ YÖNETİMİ',
                 style: GoogleFonts.poppins(
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 2,
@@ -41,24 +40,13 @@ class CategoryManagerScreen extends ConsumerWidget {
               ),
             ),
           ),
-          _SectionHeader(label: '📈 GELİR SİSTEMİ'),
-          _HierarchicalCategoryList(topLevel: topLevelIncome, type: 'income'),
+          _SectionHeader(label: '📂 TÜM KATEGORİLER'),
+          _HierarchicalCategoryList(topLevel: topLevel, type: 'expense'),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: _AddButton(
-                label: '+ Yeni Gelir Grubu',
-                type: 'income',
-              ),
-            ),
-          ),
-          _SectionHeader(label: '💸 GİDER SİSTEMİ'),
-          _HierarchicalCategoryList(topLevel: topLevelExpense, type: 'expense'),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: _AddButton(
-                label: '+ Yeni Gider Grubu',
+                label: '+ Yeni Kategori Grubu',
                 type: 'expense',
               ),
             ),
@@ -105,7 +93,7 @@ class _HierarchicalCategoryList extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
           child: Text('Henüz grup yok.',
-              style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13)),
+              style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
         ),
       );
     }
@@ -128,7 +116,7 @@ class _HierarchicalCategoryList extends ConsumerWidget {
                     tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     leading: _CategoryIcon(codePoint: cat.iconCodePoint),
                     title: Text(cat.name,
-                        style: GoogleFonts.poppins(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                        style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600)),
                     subtitle: cat.monthlyLimit != null 
                         ? Text('Limit: ${NumberFormat('#,##0', 'tr_TR').format(cat.monthlyLimit)} ₺',
                             style: GoogleFonts.poppins(color: AppColors.gold, fontSize: 11, fontWeight: FontWeight.w600))
@@ -137,10 +125,10 @@ class _HierarchicalCategoryList extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 20),
+                          icon: Icon(Icons.edit_outlined, color: Theme.of(context).textTheme.bodySmall?.color, size: 20),
                           onPressed: () => _showEditSheet(context, cat, ref),
                         ),
-                        const Icon(Icons.expand_more_rounded, color: AppColors.textSecondary),
+                        Icon(Icons.expand_more_rounded, color: Theme.of(context).textTheme.bodySmall?.color),
                       ],
                     ),
                     children: [
@@ -224,14 +212,14 @@ class _SubCategoryTile extends ConsumerWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.only(left: 64, right: 16),
         leading: Icon(IconData(sub.iconCodePoint, fontFamily: 'MaterialIcons'), 
-          color: AppColors.textSecondary, size: 18),
-        title: Text(sub.name, style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 13)),
+          color: Theme.of(context).textTheme.bodySmall?.color, size: 18),
+        title: Text(sub.name, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 13)),
         subtitle: sub.monthlyLimit != null 
             ? Text('Limit: ${NumberFormat('#,##0', 'tr_TR').format(sub.monthlyLimit)} ₺',
                 style: GoogleFonts.poppins(color: AppColors.gold, fontSize: 10))
             : null,
         trailing: IconButton(
-          icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 16),
+          icon: Icon(Icons.edit_outlined, color: Theme.of(context).textTheme.bodySmall?.color, size: 16),
           onPressed: () {
             showModalBottomSheet(
               context: context,
@@ -369,7 +357,7 @@ class _CategorySheetState extends State<_CategorySheet> {
         child: Container(
           margin: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppColors.gold.withOpacity( 0.3)),
           ),
@@ -385,15 +373,15 @@ class _CategorySheetState extends State<_CategorySheet> {
                 TextField(
                   controller: _nameCtrl,
                   autofocus: widget.existingCategory == null,
-                  style: GoogleFonts.poppins(color: AppColors.textPrimary),
-                  decoration: _inputDecoration('Kategori Adı'),
+                  style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface),
+                  decoration: _inputDecoration('Kategori Adı', context),
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: _selectedParentId,
-                  dropdownColor: AppColors.surface,
-                  style: GoogleFonts.poppins(color: AppColors.textPrimary),
-                  decoration: _inputDecoration('Üst Kategori (Opsiyonel)'),
+                  dropdownColor: Theme.of(context).colorScheme.surface,
+                  style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface),
+                  decoration: _inputDecoration('Üst Kategori (Opsiyonel)', context),
                   items: [
                     const DropdownMenuItem(value: null, child: Text('Yok (Ana Grup)')),
                     ...potentialParents.map((p) => DropdownMenuItem(value: p.id, child: Text(p.name))),
@@ -405,11 +393,11 @@ class _CategorySheetState extends State<_CategorySheet> {
                   TextField(
                     controller: _limitCtrl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: GoogleFonts.poppins(color: AppColors.textPrimary),
-                    decoration: _inputDecoration('Aylık Bütçe Limiti (₺)'),
+                    style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface),
+                    decoration: _inputDecoration('Aylık Bütçe Limiti (₺)', context),
                   ),
                 const SizedBox(height: 16),
-                Text('İkon Seç', style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 12)),
+                Text('İkon Seç', style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -422,16 +410,16 @@ class _CategorySheetState extends State<_CategorySheet> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.gold.withOpacity( 0.2) : AppColors.glassBg,
+                          color: selected ? AppColors.gold.withOpacity( 0.2) : Theme.of(context).inputDecorationTheme.fillColor,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: selected ? AppColors.gold : AppColors.glassBorder,
+                            color: selected ? AppColors.gold : (Theme.of(context).dividerTheme.color ?? Colors.transparent),
                             width: selected ? 1.5 : 1,
                           ),
                         ),
                         child: Icon(
                           IconData(item['code'] as int, fontFamily: 'MaterialIcons'),
-                          color: selected ? AppColors.gold : AppColors.textSecondary,
+                          color: selected ? AppColors.gold : Theme.of(context).textTheme.bodySmall?.color,
                           size: 20,
                         ),
                       ),
@@ -484,13 +472,13 @@ class _CategorySheetState extends State<_CategorySheet> {
     });
   }
 
-  InputDecoration _inputDecoration(String label) {
+  InputDecoration _inputDecoration(String label, BuildContext context) {
     return InputDecoration(
       labelText: label,
-      labelStyle: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13),
+      labelStyle: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.glassBorder),
+        borderSide: BorderSide(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

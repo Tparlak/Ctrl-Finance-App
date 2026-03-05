@@ -2,9 +2,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../theme/app_colors.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/add_transaction_sheet.dart';
+import '../widgets/bounce_tap.dart';
 
 class VipBottomNavBar extends ConsumerWidget {
   final int currentIndex;
@@ -58,7 +58,7 @@ class VipBottomNavBar extends ConsumerWidget {
                     children: [
                       // INCOME Button
                       Expanded(
-                        child: GestureDetector(
+                        child: BounceTap(
                           onTap: () => showAddTransactionSheet(context, initialTab: 0),
                           child: Container(
                             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -81,7 +81,7 @@ class VipBottomNavBar extends ConsumerWidget {
                       ),
                       // EXPENSE Button
                       Expanded(
-                        child: GestureDetector(
+                        child: BounceTap(
                           onTap: () => showAddTransactionSheet(context, initialTab: 1),
                           child: Container(
                             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -145,11 +145,10 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? accent : AppColors.textSecondary;
+    final color = selected ? accent : (Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey);
     return Expanded(
-      child: GestureDetector(
+      child: BounceTap(
         onTap: onTap,
-        behavior: HitTestBehavior.opaque,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

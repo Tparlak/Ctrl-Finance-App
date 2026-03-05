@@ -2,19 +2,48 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_colors.dart';
 import '../providers/theme_provider.dart';
 import '../providers/navigation_provider.dart';
+import '../theme/app_theme_tokens.dart';
 
-class AppDrawer extends ConsumerWidget {
+class AppDrawer extends ConsumerStatefulWidget {
   const AppDrawer({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppDrawer> createState() => _AppDrawerState();
+}
+
+class _AppDrawerState extends ConsumerState<AppDrawer> {
+  String _userName = '';
+  String _appVersion = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _userName = prefs.getString('userName') ?? '';
+        _appVersion = 'Ctrl v${info.version}';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeState = ref.watch(themeProvider);
     final accent = themeState.variant.accent;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tokens = isDark ? AppThemeTokens.dark : AppThemeTokens.light;
 
     return Drawer(
       backgroundColor: Colors.transparent,
@@ -22,18 +51,16 @@ class AppDrawer extends ConsumerWidget {
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF0B0C10).withOpacity( 0.95)
-                : Colors.white.withOpacity( 0.95),
+            color: tokens.background.withOpacity(0.95),
             border: Border(
-              right: BorderSide(color: AppColors.glassBorder, width: 1),
+              right: BorderSide(color: tokens.glassBorder, width: 1),
             ),
           ),
           child: SafeArea(
             child: Column(
               children: [
-                _DrawerHeader(accent: accent),
-                Divider(color: AppColors.glassBorder, height: 1),
+                _DrawerHeader(accent: accent, userName: _userName),
+                Divider(color: tokens.glassBorder, height: 1),
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -70,7 +97,7 @@ class AppDrawer extends ConsumerWidget {
                         label: 'Araç Yönetimi',
                         accent: accent,
                         onTap: () {
-                          Navigator.pop(context); // close drawer
+                          Navigator.pop(context);
                           Navigator.pushNamed(context, '/car-ledger');
                         },
                       ),
@@ -110,7 +137,7 @@ class AppDrawer extends ConsumerWidget {
                           Navigator.pop(context);
                         },
                       ),
-                      Divider(color: AppColors.glassBorder, height: 24),
+                      Divider(color: tokens.glassBorder, height: 24),
                       _DrawerTile(
                         icon: Icons.code,
                         label: 'GitHub',
@@ -120,12 +147,13 @@ class AppDrawer extends ConsumerWidget {
                     ],
                   ),
                 ),
+                // ── Bottom: Dynamic version ──────────────────────────────────
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                   child: Text(
-                    'Ctrl Finance v5.0',
+                    _appVersion.isNotEmpty ? _appVersion : 'Ctrl Finance',
                     style: GoogleFonts.poppins(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                       fontSize: 11,
                     ),
                   ),
@@ -154,10 +182,14 @@ class AppDrawer extends ConsumerWidget {
 
 class _DrawerHeader extends StatelessWidget {
   final Color accent;
-  const _DrawerHeader({required this.accent});
+  final String userName;
+  const _DrawerHeader({required this.accent, required this.userName});
 
   @override
   Widget build(BuildContext context) {
+    final displayName = userName.isNotEmpty ? userName : 'Kullanıcı';
+    final initial = displayName[0].toUpperCase();
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
       child: Row(
@@ -168,11 +200,20 @@ class _DrawerHeader extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [accent.withOpacity( 0.3), AppColors.gold.withOpacity( 0.15)],
+                colors: [accent.withOpacity(0.3), AppColors.gold.withOpacity(0.15)],
               ),
-              border: Border.all(color: accent.withOpacity( 0.5), width: 1.5),
+              border: Border.all(color: accent.withOpacity(0.5), width: 1.5),
             ),
-            child: Icon(Icons.person_rounded, color: accent, size: 28),
+            child: Center(
+              child: Text(
+                initial,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: accent,
+                ),
+              ),
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -180,9 +221,9 @@ class _DrawerHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Kullanıcı',
+                  displayName,
                   style: GoogleFonts.poppins(
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
@@ -194,7 +235,7 @@ class _DrawerHeader extends StatelessWidget {
                     gradient: AppColors.goldGradient,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
-                      BoxShadow(color: AppColors.gold.withOpacity( 0.4), blurRadius: 8),
+                      BoxShadow(color: AppColors.gold.withOpacity(0.4), blurRadius: 8),
                     ],
                   ),
                   child: Text(
@@ -231,13 +272,13 @@ class _DrawerTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, size: 22, color: AppColors.textSecondary),
+      leading: Icon(icon, size: 22, color: Theme.of(context).textTheme.bodySmall?.color),
       title: Text(
         label,
         style: GoogleFonts.poppins(
           fontSize: 14,
           fontWeight: FontWeight.w500,
-          color: AppColors.textPrimary,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
       onTap: onTap,
@@ -247,4 +288,3 @@ class _DrawerTile extends StatelessWidget {
     );
   }
 }
-

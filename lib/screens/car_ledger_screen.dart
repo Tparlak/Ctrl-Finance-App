@@ -39,13 +39,21 @@ class _CarLedgerScreenState extends ConsumerState<CarLedgerScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_ios_rounded, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Araç Yönetimi', style: GoogleFonts.poppins(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+        title: Text('Araç Yönetimi', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w700)),
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.black.withValues(alpha: 0.3)),
+          ),
+        ),
       ),
       body: Column(
         children: [
+          // Top spacing to avoid content hiding behind AppBar
+          SizedBox(height: MediaQuery.of(context).padding.top + kToolbarHeight + 10),
           // Summary card
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -56,9 +64,9 @@ class _CarLedgerScreenState extends ConsumerState<CarLedgerScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.glassBg,
+                    color: Theme.of(context).inputDecorationTheme.fillColor,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.glassBorder),
+                    border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
                   ),
                   child: Row(
                     children: [
@@ -74,7 +82,7 @@ class _CarLedgerScreenState extends ConsumerState<CarLedgerScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Toplam Araç Harcaması', style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 12)),
+                          Text('Toplam Araç Harcaması', style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
                           Text('${fmt.format(total)} ₺', style: GoogleFonts.poppins(color: AppColors.gold, fontSize: 22, fontWeight: FontWeight.w800)),
                         ],
                       ),
@@ -100,12 +108,12 @@ class _CarLedgerScreenState extends ConsumerState<CarLedgerScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: sel ? AppColors.gold : AppColors.glassBg,
+                      color: sel ? AppColors.gold : Theme.of(context).inputDecorationTheme.fillColor,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: sel ? AppColors.gold : AppColors.glassBorder),
+                      border: Border.all(color: sel ? AppColors.gold : (Theme.of(context).dividerTheme.color ?? Colors.transparent)),
                     ),
                     child: Text(cat, style: GoogleFonts.poppins(
-                      color: sel ? Colors.black : AppColors.textSecondary,
+                      color: sel ? Colors.black : Theme.of(context).textTheme.bodySmall?.color,
                       fontSize: 12, fontWeight: FontWeight.w600,
                     )),
                   ),
@@ -117,7 +125,7 @@ class _CarLedgerScreenState extends ConsumerState<CarLedgerScreen> {
           // List
           Expanded(
             child: filtered.isEmpty
-                ? Center(child: Text('Henüz kayıt yok', style: GoogleFonts.poppins(color: AppColors.textSecondary)))
+                ? Center(child: Text('Henüz kayıt yok', style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color)))
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filtered.length,
@@ -141,9 +149,9 @@ class _CarLedgerScreenState extends ConsumerState<CarLedgerScreen> {
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: AppColors.glassBg,
+                            color: Theme.of(context).inputDecorationTheme.fillColor,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.glassBorder),
+                            border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
                           ),
                           child: Row(
                             children: [
@@ -160,7 +168,7 @@ class _CarLedgerScreenState extends ConsumerState<CarLedgerScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(e.title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: AppColors.textPrimary, fontSize: 13)),
+                                    Text(e.title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface, fontSize: 13)),
                                     Row(children: [
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
@@ -172,11 +180,11 @@ class _CarLedgerScreenState extends ConsumerState<CarLedgerScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(DateFormat('dd MMM yyyy', 'tr_TR').format(e.date),
-                                          style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 11)),
+                                          style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 11)),
                                       if (e.kilometers != null) ...[
                                         const SizedBox(width: 8),
                                         Text('${e.kilometers!.toStringAsFixed(0)} km',
-                                            style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 11)),
+                                            style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 11)),
                                       ],
                                     ]),
                                   ],
@@ -240,24 +248,24 @@ class _AddCarExpenseSheetState extends ConsumerState<_AddCarExpenseSheet> {
     return Container(
       margin: EdgeInsets.only(bottom: kb),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      decoration: const BoxDecoration(
-        color: Color(0xFF15161B),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade700, borderRadius: BorderRadius.circular(2)))),
+          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Theme.of(context).dividerTheme.color ?? Colors.grey, borderRadius: BorderRadius.circular(2)))),
           const SizedBox(height: 16),
-          Text('Araç Gideri Ekle', style: GoogleFonts.poppins(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+          Text('Araç Gideri Ekle', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w700, fontSize: 16)),
           const SizedBox(height: 16),
-          _field(_titleC, 'Başlık *'),
+          _field(_titleC, 'Başlık *', context),
           const SizedBox(height: 10),
           Row(children: [
-            Expanded(child: _field(_amountC, 'Tutar (₺)', isNum: true)),
+            Expanded(child: _field(_amountC, 'Tutar (₺)', context, isNum: true)),
             const SizedBox(width: 10),
-            Expanded(child: _field(_kmC, 'Kilometre', isNum: true)),
+            Expanded(child: _field(_kmC, 'Kilometre', context, isNum: true)),
           ]),
           const SizedBox(height: 10),
           // Category chips
@@ -268,16 +276,16 @@ class _AddCarExpenseSheetState extends ConsumerState<_AddCarExpenseSheet> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _cat == c ? AppColors.gold : AppColors.glassBg,
+                  color: _cat == c ? AppColors.gold : Theme.of(context).inputDecorationTheme.fillColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _cat == c ? AppColors.gold : AppColors.glassBorder),
+                  border: Border.all(color: _cat == c ? AppColors.gold : (Theme.of(context).dividerTheme.color ?? Colors.transparent)),
                 ),
-                child: Text(c, style: GoogleFonts.poppins(color: _cat == c ? Colors.black : AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600)),
+                child: Text(c, style: GoogleFonts.poppins(color: _cat == c ? Colors.black : Theme.of(context).textTheme.bodySmall?.color, fontSize: 12, fontWeight: FontWeight.w600)),
               ),
             )).toList(),
           ),
           const SizedBox(height: 10),
-          _field(_noteC, 'Notlar (İsteğe bağlı)', maxLines: 2),
+          _field(_noteC, 'Notlar (İsteğe bağlı)', context, maxLines: 2),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -308,20 +316,20 @@ class _AddCarExpenseSheetState extends ConsumerState<_AddCarExpenseSheet> {
     );
   }
 
-  Widget _field(TextEditingController c, String hint, {bool isNum = false, int maxLines = 1}) {
+  Widget _field(TextEditingController c, String hint, BuildContext context, {bool isNum = false, int maxLines = 1}) {
     return TextFormField(
       controller: c,
       keyboardType: isNum ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
       maxLines: maxLines,
-      style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 14),
+      style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 13),
+        hintStyle: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13),
         filled: true,
-        fillColor: AppColors.glassBg,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.glassBorder)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.glassBorder)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.gold, width: 1.5)),
+        fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).dividerTheme.color ?? Colors.transparent)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).dividerTheme.color ?? Colors.transparent)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.gold, width: 1.5)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),
     );

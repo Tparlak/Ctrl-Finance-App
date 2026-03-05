@@ -19,6 +19,7 @@ import 'screens/markets_screen.dart';
 import 'widgets/bottom_nav_bar.dart';
 import 'widgets/app_drawer.dart';
 import 'widgets/add_transaction_sheet.dart';
+import 'widgets/bounce_tap.dart';
 import 'screens/onboarding_screen.dart';
 import 'providers/theme_provider.dart';
 import 'providers/fixed_expense_provider.dart';
@@ -42,15 +43,12 @@ Future<void> main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: AppColors.background,
-      systemNavigationBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
     ),
   );
 
   try {
     await Hive.initFlutter();
-    tz.initializeTimeZones();
     await HiveBoxes.openAll();
     await initializeDateFormatting('tr_TR', null);
     if (!kIsWeb) {
@@ -60,7 +58,7 @@ Future<void> main() async {
       await HomeWidgetService.init();
       await HomeWidgetService.syncWidgetData();
     }
-    await PermissionService.requestInitialPermissions();
+    // NOTE: Permissions are requested AFTER onboarding completes (see OnboardingScreen._finish)
   } catch (e) {
     runApp(
       MaterialApp(
@@ -153,7 +151,7 @@ class _AppRootState extends ConsumerState<_AppRoot> {
   void initState() {
     super.initState();
     _onboardingDoneFuture = SharedPreferences.getInstance()
-        .then((prefs) => prefs.getBool('isOnboardingDone') ?? false);
+        .then((prefs) => prefs.getBool('hasSeenOnboarding') ?? prefs.getBool('isOnboardingDone') ?? false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(fixedExpenseProvider.notifier).checkUpcomingPayments();
     });
@@ -259,20 +257,19 @@ class _AppLockScreenState extends State<AppLockScreen> {
                     return InkWell(
                       onTap: _onDelete,
                       borderRadius: BorderRadius.circular(40),
-                      child: const Center(child: Icon(Icons.backspace_outlined, color: AppColors.textPrimary)),
+                      child: Center(child: Icon(Icons.backspace_outlined, color: Theme.of(context).colorScheme.onSurface)),
                     );
                   }
                   final digit = index == 10 ? '0' : '${index + 1}';
-                  return InkWell(
+                  return BounceTap(
                     onTap: () => _onDigit(digit),
-                    borderRadius: BorderRadius.circular(40),
                     child: Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.glassBg,
+                        color: Theme.of(context).inputDecorationTheme.fillColor,
                       ),
                       child: Center(
-                        child: Text(digit, style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 24, fontWeight: FontWeight.w600)),
+                        child: Text(digit, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   );
@@ -321,10 +318,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(navigationProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       ),
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -336,17 +335,26 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             Positioned(
               top: -120,
               left: -80,
-              child: _GlowOrb(size: 320, color: AppColors.gold.withOpacity( 0.06)),
+              child: _GlowOrb(
+                size: 320, 
+                color: (isDark ? AppColors.gold : Colors.blueAccent).withOpacity(0.06)
+              ),
             ),
             Positioned(
               bottom: 60,
               right: -100,
-              child: _GlowOrb(size: 260, color: AppColors.blue.withOpacity( 0.04)),
+              child: _GlowOrb(
+                size: 260, 
+                color: (isDark ? AppColors.blue : Colors.purpleAccent).withOpacity(0.04)
+              ),
             ),
             Positioned(
               top: 300,
               right: -60,
-              child: _GlowOrb(size: 180, color: AppColors.green.withOpacity( 0.03)),
+              child: _GlowOrb(
+                size: 180, 
+                color: (isDark ? AppColors.green : Colors.orangeAccent).withOpacity(0.03)
+              ),
             ),
             IndexedStack(
               index: currentIndex,

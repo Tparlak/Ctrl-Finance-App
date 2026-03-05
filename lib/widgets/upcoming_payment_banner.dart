@@ -32,8 +32,12 @@ class UpcomingPaymentBanner extends StatelessWidget {
                   colors: [Color(0xFFFA8231), Color(0xFFF39C12)],
                 ),
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+                boxShadow: [
+                  BoxShadow(
+                    color: (Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.black12), 
+                    blurRadius: 10, 
+                    offset: const Offset(0, 4)
+                  ),
                 ],
               ),
               child: Row(

@@ -33,7 +33,7 @@ class _MonthlyPieChartState extends State<MonthlyPieChart> {
         child: Center(
           child: Text(
             'Bu ay henüz gider yok',
-            style: GoogleFonts.poppins(color: AppColors.textSecondary),
+            style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color),
           ),
         ),
       );
@@ -97,7 +97,7 @@ class _MonthlyPieChartState extends State<MonthlyPieChart> {
                   Text(
                     monthName,
                     style: GoogleFonts.poppins(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 2,
@@ -127,7 +127,7 @@ class _MonthlyPieChartState extends State<MonthlyPieChart> {
                     Text(
                       '${widget.data[_touchedIndex].percentage.toStringAsFixed(1)}%',
                       style: GoogleFonts.poppins(
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -180,8 +180,8 @@ class _MonthlyPieChartState extends State<MonthlyPieChart> {
                       e.value.categoryName,
                       style: GoogleFonts.poppins(
                         color: _touchedIndex == e.key
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(context).textTheme.bodySmall?.color,
                         fontSize: 12,
                         fontWeight: _touchedIndex == e.key
                             ? FontWeight.w600

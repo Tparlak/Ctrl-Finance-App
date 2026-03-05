@@ -58,7 +58,7 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
               IconData(parent.iconCodePoint, fontFamily: 'MaterialIcons'),
               color: _parseColor(parent.color),
             ),
-            title: Text(parent.name, style: GoogleFonts.poppins()),
+            title: Text(parent.name, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface)),
             onTap: () {
               Navigator.pop(context); // close sheet
               widget.onSelected(parent);
@@ -72,7 +72,7 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
             IconData(parent.iconCodePoint, fontFamily: 'MaterialIcons'),
             color: _parseColor(parent.color),
           ),
-          title: Text(parent.name, style: GoogleFonts.poppins()),
+          title: Text(parent.name, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface)),
           children: children.map((child) {
             return ListTile(
               contentPadding: const EdgeInsets.only(left: 56.0),
@@ -81,7 +81,7 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
                 color: Colors.grey,
                 size: 20,
               ),
-              title: Text(child.name, style: GoogleFonts.poppins(fontSize: 14)),
+              title: Text(child.name, style: GoogleFonts.poppins(fontSize: 14, color: Theme.of(context).colorScheme.onSurface)),
               onTap: () {
                 Navigator.pop(context); // close sheet
                 widget.onSelected(child);

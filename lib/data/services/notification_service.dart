@@ -1,7 +1,7 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
@@ -18,6 +18,7 @@ class NotificationService {
       const InitializationSettings(android: android, iOS: ios),
     );
 
+    // Request permissions for Android 13+
     await _plugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
@@ -25,9 +26,16 @@ class NotificationService {
     if (!_tzInitialized) {
       try {
         tz_data.initializeTimeZones();
-        tz.setLocalLocation(tz.getLocation('Europe/Istanbul'));
+        final timeZoneName = await FlutterTimezone.getLocalTimezone();
+        tz.setLocalLocation(tz.getLocation(timeZoneName.toString()));
         _tzInitialized = true;
-      } catch (_) {}
+      } catch (_) {
+        // Fallback to Istanbul if timezone detection fails
+        try {
+          tz.setLocalLocation(tz.getLocation('Europe/Istanbul'));
+          _tzInitialized = true;
+        } catch (__) {}
+      }
     }
   }
 

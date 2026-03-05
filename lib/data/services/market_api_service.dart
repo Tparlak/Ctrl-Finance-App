@@ -33,17 +33,20 @@ class MarketApiService {
 
       items.add(MarketItem(code: 'USD', nameTR: 'Amerikan Doları', rateInTRY: tryPerUsd, fetchedAt: now));
 
-      if (eurPerUsd != null && eurPerUsd > 0)
+      if (eurPerUsd != null && eurPerUsd > 0) {
         items.add(MarketItem(code: 'EUR', nameTR: 'Euro',
             rateInTRY: tryPerUsd / eurPerUsd, fetchedAt: now));
+      }
 
-      if (xauPerUsd != null && xauPerUsd > 0)
+      if (xauPerUsd != null && xauPerUsd > 0) {
         items.add(MarketItem(code: 'XAU', nameTR: 'Altın (gram)',
             rateInTRY: (tryPerUsd / xauPerUsd) / 31.1035, fetchedAt: now));
+      }
 
-      if (xagPerUsd != null && xagPerUsd > 0)
+      if (xagPerUsd != null && xagPerUsd > 0) {
         items.add(MarketItem(code: 'XAG', nameTR: 'Gümüş (gram)',
             rateInTRY: (tryPerUsd / xagPerUsd) / 31.1035, fetchedAt: now));
+      }
     }
 
     // ── CRYPTO ────────────────────────────────────────────────────────────

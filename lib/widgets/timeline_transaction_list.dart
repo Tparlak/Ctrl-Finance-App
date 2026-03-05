@@ -4,8 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/transaction_model.dart';
 import '../theme/app_colors.dart';
-import '../utils/transaction_grouper.dart';
 import '../presentation/widgets/receipt_image_viewer.dart';
+import '../widgets/bounce_tap.dart';
 
 
 // ─── Timeline List Widget ─────────────────────────────────────────────────────
@@ -46,19 +46,22 @@ class TimelineTransactionList extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                   letterSpacing: 1.5,
                 ),
               ),
             ),
-            ...items.asMap().entries.map((entry) => _TimelineItem(
-                  transaction: entry.value,
-                  categoryMap: categoryMap,
-                  accountMap: accountMap,
-                  isFirst: entry.key == 0,
-                  isLast: entry.key == items.length - 1,
-                  onTap: onTap,
-                  onDelete: onDelete,
+            ...items.asMap().entries.map((entry) => _EntranceItem(
+                  key: ValueKey(entry.value.id),
+                  child: _TimelineItem(
+                    transaction: entry.value,
+                    categoryMap: categoryMap,
+                    accountMap: accountMap,
+                    isFirst: entry.key == 0,
+                    isLast: entry.key == items.length - 1,
+                    onTap: onTap,
+                    onDelete: onDelete,
+                  ),
                 )),
           ],
         );
@@ -104,7 +107,7 @@ class _TimelineItem extends StatelessWidget {
     final accountName = account?.name ?? '';
 
     return Dismissible(
-      key: Key(transaction.id ?? transaction.hashCode.toString()),
+      key: Key(transaction.id),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
@@ -127,7 +130,7 @@ class _TimelineItem extends StatelessWidget {
                       width: 2,
                       color: isFirst
                           ? Colors.transparent
-                          : AppColors.glassBorder,
+                          : Theme.of(context).dividerTheme.color,
                     ),
                   ),
                   Container(
@@ -149,7 +152,7 @@ class _TimelineItem extends StatelessWidget {
                       width: 2,
                       color: isLast
                           ? Colors.transparent
-                          : AppColors.glassBorder,
+                          : Theme.of(context).dividerTheme.color,
                     ),
                   ),
                 ],
@@ -157,15 +160,15 @@ class _TimelineItem extends StatelessWidget {
             ),
             // ── Transaction card ─────────────────────────────────
             Expanded(
-              child: GestureDetector(
+              child: BounceTap(
                 onTap: () => onTap?.call(transaction),
                 child: Container(
                   margin: const EdgeInsets.only(right: 16, bottom: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: AppColors.glassBg,
+                    color: Theme.of(context).inputDecorationTheme.fillColor,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.glassBorder),
+                    border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
                   ),
                   child: Row(
                     children: [
@@ -180,7 +183,7 @@ class _TimelineItem extends StatelessWidget {
                                       ? catName
                                       : (isTransfer ? 'Transfer' : '—'),
                               style: GoogleFonts.poppins(
-                                color: AppColors.textPrimary,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -193,7 +196,7 @@ class _TimelineItem extends StatelessWidget {
                                     .where((s) => s.isNotEmpty)
                                     .join(' · '),
                                 style: GoogleFonts.poppins(
-                                  color: AppColors.textSecondary,
+                                  color: Theme.of(context).textTheme.bodySmall?.color,
                                   fontSize: 11,
                                 ),
                                 maxLines: 1,
@@ -202,7 +205,7 @@ class _TimelineItem extends StatelessWidget {
                             Text(
                               DateFormat('HH:mm', 'tr_TR').format(transaction.date),
                               style: GoogleFonts.poppins(
-                                color: AppColors.textSecondary.withOpacity( 0.6),
+                                color: (Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey).withOpacity(0.6),
                                 fontSize: 10,
                               ),
                             ),
@@ -218,7 +221,7 @@ class _TimelineItem extends StatelessWidget {
                             height: 32,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: AppColors.glassBorder),
+                              border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
                               image: DecorationImage(
                                 image: FileImage(File(transaction.receiptImagePath!)),
                                 fit: BoxFit.cover,
@@ -247,4 +250,50 @@ class _TimelineItem extends StatelessWidget {
     );
   }
 }
+
+class _EntranceItem extends StatefulWidget {
+  final Widget child;
+  const _EntranceItem({required this.child, super.key});
+
+  @override
+  State<_EntranceItem> createState() => _EntranceItemState();
+}
+
+class _EntranceItemState extends State<_EntranceItem> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: AppColors.kVipDuration * 1.5,
+    );
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: AppColors.kVipCurve,
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _animation,
+      child: SizeTransition(
+        sizeFactor: _animation,
+        axisAlignment: -1.0,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
 

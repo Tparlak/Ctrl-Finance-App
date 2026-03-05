@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,35 +22,55 @@ class FixedExpensesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBodyBehindAppBar: true,
       drawer: const AppDrawer(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddDialog(context, ref),
-        backgroundColor: AppColors.gold,
-        child: const Icon(Icons.add_rounded, color: Colors.black),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.black.withValues(alpha: 0.3)),
+          ),
+        ),
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).inputDecorationTheme.fillColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
+              ),
+              child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
+            ),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
+        ),
+        title: Text('SABİT GİDERLER',
+            style: GoogleFonts.poppins(color: AppColors.gold, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+        actions: [
+          IconButton(
+            tooltip: 'Yeni Sabit Gider',
+            icon: const Icon(Icons.add_rounded, color: AppColors.gold, size: 28),
+            onPressed: () => _showAddDialog(context, ref),
+          ),
+        ],
       ),
       body: Stack(
         children: [
           CustomScrollView(
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 100, 20, 20),
+                padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + kToolbarHeight + 10, 20, 20),
                 sliver: SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'SABİT GİDERLER',
-                        style: GoogleFonts.poppins(
-                          color: AppColors.gold,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      Text(
                         'Abonelikler, Taksitler ve Faturalar',
                         style: GoogleFonts.poppins(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
                           fontSize: 13,
                         ),
                       ),
@@ -59,10 +80,10 @@ class FixedExpensesScreen extends ConsumerWidget {
                 ),
               ),
               if (expenses.isEmpty)
-                const SliverFillRemaining(
+                SliverFillRemaining(
                   child: Center(
                     child: Text('Henüz sabit gider eklenmedi.',
-                        style: TextStyle(color: AppColors.textSecondary)),
+                        style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
                   ),
                 )
               else
@@ -80,26 +101,6 @@ class FixedExpensesScreen extends ConsumerWidget {
                 ),
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
-          ),
-          Positioned(
-            top: 10,
-            left: 10,
-            child: SafeArea(
-              child: Builder(
-                builder: (ctx) => IconButton(
-                  icon: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.glassBg,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.glassBorder),
-                    ),
-                    child: const Icon(Icons.menu_rounded, color: AppColors.gold, size: 22),
-                  ),
-                  onPressed: () => Scaffold.of(ctx).openDrawer(),
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -119,24 +120,24 @@ class FixedExpensesScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF1A1B22),
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text('Sabit Gider Ekle',
-              style: GoogleFonts.poppins(color: AppColors.textPrimary)),
+              style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: titleCtrl,
-                  style: GoogleFonts.poppins(color: AppColors.textPrimary),
+                  style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface),
                   decoration: const InputDecoration(labelText: 'Başlık (Kira, D-Smart…)'),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: amountCtrl,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style: GoogleFonts.poppins(color: AppColors.textPrimary),
+                  style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface),
                   decoration: const InputDecoration(labelText: 'Tutar (₺)'),
                 ),
                 const SizedBox(height: 10),
@@ -144,7 +145,7 @@ class FixedExpensesScreen extends ConsumerWidget {
                   contentPadding: EdgeInsets.zero,
                   activeColor: AppColors.gold,
                   title: Text('Her Ay Otomatik Ekle',
-                      style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 13)),
+                      style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 13)),
                   value: isRecurring,
                   onChanged: (val) => setState(() => isRecurring = val),
                 ),
@@ -213,7 +214,7 @@ class FixedExpensesScreen extends ConsumerWidget {
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text('İptal',
-                  style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+                  style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -286,7 +287,7 @@ class _FixedExpenseCard extends ConsumerWidget {
                     Text(
                       expense.title,
                       style: GoogleFonts.poppins(
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
@@ -298,7 +299,7 @@ class _FixedExpenseCard extends ConsumerWidget {
                               ? 'Ödendi${expense.paymentDate != null ? ' • ${_dateFmt.format(expense.paymentDate!)}' : ''}'
                               : 'Bekliyor',
                           style: GoogleFonts.poppins(
-                            color: isPaid ? AppColors.green : AppColors.textSecondary,
+                            color: isPaid ? AppColors.green : Theme.of(context).textTheme.bodySmall?.color,
                             fontSize: 11,
                           ),
                         ),
@@ -387,10 +388,10 @@ class _FixedExpenseCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF1A1B22),
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text('Hangi Hesaptan Ödendi?',
-              style: GoogleFonts.poppins(color: AppColors.textPrimary)),
+              style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface)),
           content: Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -409,7 +410,7 @@ class _FixedExpenseCard extends ConsumerWidget {
                   ),
                   child: Text(a.name,
                       style: GoogleFonts.poppins(
-                          color: sel ? AppColors.gold : AppColors.textSecondary,
+                          color: sel ? AppColors.gold : Theme.of(context).textTheme.bodySmall?.color,
                           fontWeight: sel ? FontWeight.w600 : FontWeight.w400)),
                 ),
               );
@@ -418,7 +419,7 @@ class _FixedExpenseCard extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('İptal', style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+              child: Text('İptal', style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color)),
             ),
             ElevatedButton(
               onPressed: () async {

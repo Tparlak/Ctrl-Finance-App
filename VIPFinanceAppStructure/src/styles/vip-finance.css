@@ -1,0 +1,160 @@
+/* ═══════════════════════════════════════════════════════════
+   VIP Finance — Glassmorphism Theme
+   ═══════════════════════════════════════════════════════════ */
+
+/* App Root */
+.app-root {
+  min-height: 100vh;
+  background: #0a0a1a;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Animated background gradient */
+.app-root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(120, 60, 220, 0.25) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(30, 80, 220, 0.2) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 30% at 50% 50%, rgba(100, 20, 180, 0.1) 0%, transparent 70%),
+    linear-gradient(135deg, #0a0a1a 0%, #0d0d22 50%, #0a0a1a 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Noise texture overlay */
+.app-root::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.4;
+}
+
+/* Light mode */
+.app-root.light::before {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(120, 60, 220, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(30, 80, 220, 0.08) 0%, transparent 60%),
+    linear-gradient(135deg, #f0f0ff 0%, #e8e8f8 50%, #f0f0ff 100%);
+}
+
+.app-root.light {
+  background: #f0f0ff;
+}
+
+/* All content above the pseudo elements */
+.app-root > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Sidebar */
+.glass-sidebar {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* Bottom nav */
+.glass-nav {
+  background: rgba(15, 15, 35, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Glass button utility */
+.glass-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s;
+}
+.glass-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Modal */
+.glass-modal {
+  background: rgba(12, 12, 28, 0.95);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -8px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* Dropdown */
+.glass-dropdown {
+  background: rgba(15, 15, 35, 0.97);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Input glass */
+.input-glass {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: white;
+  outline: none;
+  transition: all 0.2s;
+  width: 100%;
+  font-size: 14px;
+}
+.input-glass::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+.input-glass:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+.input-glass[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.4);
+  cursor: pointer;
+}
+.input-glass[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(1) opacity(0.7);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* No scrollbar utility */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe bottom for mobile */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

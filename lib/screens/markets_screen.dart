@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -30,16 +31,24 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.3),
+            ),
+          ),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_ios_rounded, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Canlı Piyasalar', style: GoogleFonts.poppins(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+        title: Text('Canlı Piyasalar', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w700)),
         actions: [
           IconButton(
             icon: mp.isLoading
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.gold))
-                : const Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
+                ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.onSurface))
+                : Icon(Icons.refresh_rounded, color: Theme.of(context).colorScheme.onSurface),
             onPressed: mp.isLoading ? null : () => ref.read(marketProvider.notifier).refresh(),
           ),
         ],
@@ -50,7 +59,7 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
               color: AppColors.gold,
               onRefresh: () => ref.read(marketProvider.notifier).refresh(),
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + kToolbarHeight + 10, 16, 24),
                 children: [
                   // Timestamp
                   if (mp.lastUpdated != null)
@@ -61,7 +70,7 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
                         children: [
                           Text(
                             'Son güncelleme: ${_fmtTime(mp.lastUpdated!)}',
-                            style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 11),
+                            style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 11),
                           ),
                           if (mp.hasError)
                             Row(children: [
@@ -90,17 +99,17 @@ class _MarketsScreenState extends ConsumerState<MarketsScreen> {
                     Center(child: Padding(
                       padding: const EdgeInsets.only(top: 48),
                       child: Column(children: [
-                        const Icon(Icons.wifi_off_rounded, size: 48, color: AppColors.textSecondary),
+                        Icon(Icons.wifi_off_rounded, size: 48, color: Theme.of(context).textTheme.bodySmall?.color),
                         const SizedBox(height: 12),
-                        Text('Veri alınamadı', style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 14)),
-                        Text('İnternet bağlantınızı kontrol edin', style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 12)),
+                        Text('Veri alınamadı', style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 14)),
+                        Text('İnternet bağlantınızı kontrol edin', style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
                       ]),
                     )),
 
                   const SizedBox(height: 16),
                   Center(child: Text(
                     'Kur verileri: fawazahmed0/exchange-api & CoinGecko',
-                    style: GoogleFonts.poppins(color: AppColors.textSecondary.withOpacity( 0.5), fontSize: 10),
+                    style: GoogleFonts.poppins(color: (Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey).withOpacity(0.5), fontSize: 10),
                     textAlign: TextAlign.center,
                   )),
                 ],
@@ -123,9 +132,9 @@ class _MarketCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.glassBg,
+        color: Theme.of(context).inputDecorationTheme.fillColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,10 +145,10 @@ class _MarketCard extends StatelessWidget {
               Text(emoji, style: const TextStyle(fontSize: 16)),
               const SizedBox(width: 8),
               Text(title, style: GoogleFonts.poppins(
-                  color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
             ]),
           ),
-          Divider(color: AppColors.glassBorder, height: 1),
+          Divider(color: Theme.of(context).dividerTheme.color, height: 1),
           ...items.map((item) => _MarketRow(item: item)),
         ],
       ),
@@ -179,8 +188,8 @@ class _MarketRow extends StatelessWidget {
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(item.code, style: GoogleFonts.poppins(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w700)),
-              Text(item.nameTR, style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 11)),
+              Text(item.code, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 15, fontWeight: FontWeight.w700)),
+              Text(item.nameTR, style: GoogleFonts.poppins(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 11)),
             ],
           )),
           Text('${_formatRate()} ₺', style: GoogleFonts.poppins(color: AppColors.gold, fontSize: 16, fontWeight: FontWeight.w700)),
