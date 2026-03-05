@@ -42,7 +42,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       accent: Color(0xFF00E676),
     ),
     _OnboardSlide(
-      image: '', // handled specially in slide 4
+      image: 'assets/onboarding_4.png',
       title: 'Tanışalım!',
       subtitle: 'Size nasıl hitap etmemizi istersiniz?',
       accent: AppColors.gold,
@@ -347,106 +347,9 @@ class _NameSlideWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 60),
-
-          // ── Avatar card (same dimension as image card in other slides) ────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              width: double.infinity,
-              height: cardHeight,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: accent.withOpacity(0.35), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: accent.withOpacity(0.20),
-                    blurRadius: 40,
-                    offset: const Offset(0, 16),
-                  ),
-                ],
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    accent.withOpacity(0.08),
-                    accent.withOpacity(0.03),
-                  ],
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Pulsing avatar circle
-                  ScaleTransition(
-                    scale: pulseAnimation,
-                    child: Container(
-                      width: 110,
-                      height: 110,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            accent.withOpacity(0.25),
-                            accent.withOpacity(0.05),
-                          ],
-                        ),
-                        border: Border.all(color: accent.withOpacity(0.5), width: 2),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '👋',
-                          style: const TextStyle(fontSize: 52),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Animated name preview
-                  ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: nameCtrl,
-                    builder: (_, value, __) {
-                      final name = value.text.trim();
-                      return AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        child: name.isEmpty
-                            ? Text(
-                                'Merhaba!',
-                                key: const ValueKey('empty'),
-                                style: GoogleFonts.poppins(
-                                  color: accent.withOpacity(0.5),
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              )
-                            : Text(
-                                'Merhaba, $name!',
-                                key: ValueKey(name),
-                                style: GoogleFonts.poppins(
-                                  color: accent,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Seninle tanışmak güzel 🌟',
-                    style: GoogleFonts.poppins(
-                      color: (Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey)
-                          .withOpacity(0.5),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          const SizedBox(height: 50),
 
           // ── Title ──────────────────────────────────────────────────────────────
-          const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
@@ -511,12 +414,74 @@ class _NameSlideWidget extends StatelessWidget {
             ),
           ),
 
+          const SizedBox(height: 32),
+
+          // ── Image box (Matches other slides) ────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: cardHeight,
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(
+                      color: accent.withOpacity(0.35),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accent.withOpacity(0.20),
+                        blurRadius: 40,
+                        offset: const Offset(0, 16),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: Image.asset(
+                      slide.image,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: cardHeight,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: cardHeight * 0.35,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(30),
+                        bottomRight: Radius.circular(30),
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Theme.of(context).scaffoldBackgroundColor,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Dynamic keyboard padding
           SizedBox(
-            height: MediaQuery.of(context).viewInsets.bottom + 140,
+            height: MediaQuery.of(context).viewInsets.bottom + 120,
           ),
         ],
       ),
     );
+
   }
 }
