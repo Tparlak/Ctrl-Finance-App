@@ -41,7 +41,7 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
     final grouped = <String, List<CategoryModel>>{};
     
     for (var parent in topLevel) {
-      grouped[parent.name] = categories.where((c) => c.parentCategory == parent.name).toList();
+      grouped[parent.id] = categories.where((c) => c.parentCategory == parent.id).toList();
     }
 
     return ListView.builder(
@@ -50,7 +50,7 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
       itemCount: topLevel.length,
       itemBuilder: (context, index) {
         final parent = topLevel[index];
-        final children = grouped[parent.name] ?? [];
+        final children = grouped[parent.id] ?? [];
 
         if (children.isEmpty) {
           return ListTile(
@@ -78,7 +78,7 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
               contentPadding: const EdgeInsets.only(left: 56.0),
               leading: Icon(
                 IconData(child.iconCodePoint, fontFamily: 'MaterialIcons'),
-                color: Colors.grey,
+                color: _parseColor(child.color),
                 size: 20,
               ),
               title: Text(child.name, style: GoogleFonts.poppins(fontSize: 14, color: Theme.of(context).colorScheme.onSurface)),

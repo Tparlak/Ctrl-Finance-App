@@ -416,15 +416,24 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                     children: [
                       Icon(Icons.category_outlined, color: _actionColor, size: 18),
                       const SizedBox(width: 12),
-                      Text(
-                        _selectedCategoryId == null 
-                          ? 'Kategori Seç' 
-                          : categories.firstWhere((c) => c.id == _selectedCategoryId, orElse: () => categories.first).name,
-                        style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
+                      Builder(
+                        builder: (context) {
+                          if (_selectedCategoryId == null) return Text('Kategori Seç', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 14));
+                          
+                          final cat = categories.firstWhere((c) => c.id == _selectedCategoryId, orElse: () => categories.first);
+                          if (cat.parentCategory != null) {
+                            final parent = categories.firstWhere((c) => c.id == cat.parentCategory, orElse: () => cat);
+                            return Text(
+                              '${parent.name} > ${cat.name}',
+                              style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w500),
+                            );
+                          }
+                          return Text(cat.name, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 14));
+                        },
                       ),
                     ],
                   ),
-                  Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 20),
+                  const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 20),
                 ],
               ),
             ),
