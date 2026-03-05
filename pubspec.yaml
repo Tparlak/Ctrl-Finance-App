@@ -58,11 +58,11 @@ flutter_launcher_icons:
 flutter:
   uses-material-design: true
   assets:
-    - assets/icon/V5_icon.png
     - assets/icon/ctrl_v6_logo.png
     - assets/onboarding_1.png
     - assets/onboarding_2.png
     - assets/onboarding_3.png
+    - assets/onboarding_4.png
 
 # ─── Native Splash Screen Config ───────────────────────────────────────────────
 flutter_native_splash:
