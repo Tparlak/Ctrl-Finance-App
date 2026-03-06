@@ -176,13 +176,7 @@ class OcrService {
       if (val != null && val > 0) return val;
     }
 
-    // Last resort: largest number in receipt
-    final all = RegExp(r'\b\d{1,6}[.,]\d{2}\b')
-        .allMatches(text)
-        .map((m) => _parseAmount(m.group(0)!) ?? 0.0)
-        .toList()
-      ..sort((a, b) => b.compareTo(a));
-    return all.isNotEmpty ? all.first : null;
+    return null; // Don't mistakenly capture other random numbers at the bottom (like tax)
   }
 
   // ── DATE ──────────────────────────────────────────────────────────────────
@@ -226,15 +220,15 @@ class OcrService {
     // Skip common receipt noise on the first lines of Turkish receipts:
     // "*TEŞEKKÜR EDERİZ*", website URLs, and lines starting with *.
     final skipPattern = RegExp(
-      r'TE[ŞS]EKK[ÜU]R|TESEKKUR|WWW\.|HTTP|^\*',
+      r'TE[ŞS]EKK[ÜU]R|TESEKKUR|WWW\.|HTTP|^\*|M[ÜU][ŞS]TER[Iİ]',
       caseSensitive: false,
     );
-    final candidates = text
-        .split('\n')
-        .map((l) => l.trim())
-        .where((l) => l.length > 3)
-        .take(5);
-    for (final line in candidates) {
+    
+    final lines = text.split('\n').map((l) => l.trim()).where((l) => l.length > 3).toList();
+    
+    // Look at the first 5 meaningful lines for a merchant name
+    for (int i = 0; i < (lines.length > 5 ? 5 : lines.length); i++) {
+        final line = lines[i];
       if (!skipPattern.hasMatch(line)) return line;
     }
     return 'Market Alışverişi';
@@ -272,9 +266,9 @@ class OcrService {
       if (line.length < 5) continue;
 
       // ── Pattern 1 (Turkish grocery format): "NAME %TaxRate *Price"
-      // e.g. "KENT SWITCH %00 *105,00"  or  "DURU BAK. BULGUR 1 %01 *64,95"
+      // Covers: "KENT SWITCH %00 *105,00", "DURU BAK. BULGUR 1 %01 *64,95", or just "EKMEK *10,00"
       final trPattern = RegExp(
-        r'^([A-ZÇĞİÖŞÜa-zçğışöü0-9\s./%&\-]{2,45}?)\s+%\d{1,2}\s+[*](\d{1,6}[.,]\d{2})',
+        r'^([A-ZÇĞİÖŞÜa-zçğışöü0-9\s./%&\-]{2,45}?)\s+(?:(?:%\d{1,2}\s+)|(?:\d+\s+%\d{1,2}\s+))?[*]?\s*(\d{1,6}[.,]\d{2})',
         caseSensitive: false,
       );
       final trm = trPattern.firstMatch(line);
