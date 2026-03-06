@@ -1,56 +1,82 @@
-# Ctrl - Kişisel Finans Takip Uygulaması 🚀
+# Ctrl - AI Destekli Premium Kişisel Finans Takip Uygulaması 🚀
 
-**Ctrl**, modern VIP estetiği ve cam (glassmorphism) tasarımı ile geliştirilmiş, kullanıcı dostu bir kişisel finans yönetim uygulamasıdır. Gelir, gider ve sabit masraflarınızı en şık şekilde takip etmeniz için tasarlanmıştır.
+<div align="center">
+  <img src="docs/images/dashboard.png" alt="Ctrl Dashboard" width="800"/>
+</div>
+
+**Ctrl**, modern VIP estetiği, cam (glassmorphism) tasarımı ve **Yapay Zeka Destekli OCR (Optik Karakter Tanıma)** teknolojisi ile geliştirilmiş, en gelişmiş kişisel finans yönetim uygulamasıdır. Gelir, gider, sabit masraflarınızı, hesaplarınızı ve kredi kartlarınızı şık, güvenli ve akıllı bir şekilde takip etmeniz için tasarlanmıştır.
 
 ## ✨ Öne Çıkan Özellikler
 
--   **💎 VIP Tasarım**: Karanlık mod odaklı, altın rengi vurgular ve gelişmiş cam efekti (Glassmorphism) ile premium kullanıcı deneyimi.
--   **📊 Dashboard**: Mevcut bakiyenizi, o ayki toplam gelirinizi ve giderlerinizi anlık olarak görün.
--   **🏦 Hesap Yönetimi**: Birden fazla hesap (Nakit, Banka Kartı, Kredi Kartı vb.) tanımlayın ve bakiyelerini ayrı ayrı takip edin.
--   **📂 Kategorizasyon**: Harcamalarınızı Market, Ulaşım, Eğlence gibi kategorilere ayırarak nereye ne kadar harcadığınızı analiz edin.
--   **🗓️ Sabit Masraflar**: Kira, faturalar gibi her ay tekrarlayan masraflarınızı kaydedin; uygulama her ay başında bunları sizin için otomatik olarak klonlar.
--   **📱 S22 & Modern Cihaz Desteği**: Samsung One UI ve diğer modern Android cihazlar için tam uyumlu, full-bleed adaptif ikon desteği.
--   **🔒 Yerel Depolama**: Verileriniz Hive ile cihazınızda güvenli bir şekilde saklanır, internet gerektirmez.
+- 💎 **VIP & Glassmorphism Tasarım**: Karanlık mod odaklı, altın ve neon vurgulara sahip premium kullanıcı deneyimi sunan akıcı ve fütüristik arayüz.
+- 🤖 **Yapay Zeka Destekli Fiş Tarama (OCR)**: Market veya akaryakıt fişlerinizi telefonunuzun kamerasıyla tarayın. Ctrl, market/yakıt istasyonu adını, *ürünlerin listesini ve fiyatlarını* otomatik olarak okur ve kategorize ederek işleminizin açıklamasına ekler.
+- 📊 **Akıllı Dashboard**: Mevcut bakiyenizi, o ayki toplam gelirinizi ve giderlerinizi anlık ve grafiksel olarak görün.
+- 🏦 **Gelişmiş Hesap Yönetimi**: Birden fazla hesap (Nakit, Banka Kartı, Kredi Kartı, Birikim) tanımlayın. Bakiyeleri isterseniz genel toplama dahil edin, isterseniz gizleyin.
+- 🗂️ **Hiyerarşik Alt Kategorizasyon**: Harcamalarınızı (Örn: Mutfak > Market) alt kategorilerle detaylı olarak ayrıştırın.
+- 🗓️ **Sabit Masraflar ve Güçlü Hatırlatıcılar**: Kira, faturalar veya kredi taksitlerinizi kaydedin. **Android 12+ için Exact Alarm** (Tam Zamanlı Alarm) entegrasyonu sayesinde, hatırlatmalarınız tam zamanında ekranınıza bildirim olarak düşer. İşlemleri tek tıkla otomatik ödeyin.
+- 🔒 **Güvenlik ve Gizlilik**: Ctrl Security App Lock özelliği sayesinde uygulamanız şifrelidir. Verileriniz Hive veritabanı ile sadece **yerel cihazınızda** saklanır; internete hiçbir veri gitmez.
+
+---
+
+### AI Fiş ve Fatura Okuma (Smart Scanner)
+<div align="center">
+  <img src="docs/images/ocr.png" alt="Fiş Tarama ve OCR" width="800"/>
+</div>
+
+Yenilenen yapay zeka entegrasyonu sayesinde harcamaları elle girmeye son. Fişinizi tarattığınızda sistem satırları okur, gereksiz "Vergi, KDV" yazılarını eler, fişteki market ismini ve satın aldığınız her bir ürünü fiyatıyla beraber veritabanına kaydeder.
+
+### Sabit Giderler ve Akıllı Bildirimler
+<div align="center">
+  <img src="docs/images/reminders.png" alt="Hatırlatıcılar ve Takvim" width="800"/>
+</div>
+
+Gelişmiş arka plan servisleri yardımıyla (Flutter Local Notifications + exact alarms), önemli günlerinizi, araç muayene tarihlerini, fatura kesim zamanlarını saniyesi saniyesine haber alın.
+
+---
 
 ## 🛠️ Teknik Stack
 
--   **Framework**: Flutter
--   **State Management**: Riverpod (Generator destekli)
--   **Veritabanı**: Hive (NoSQL, hızlı yerel depolama)
--   **Tasarım**: Custom Glassmorphism UI & Google Fonts (Poppins)
--   **Konfigürasyon**: Flutter Launcher Icons (Adaptif İkon Senkronizasyonu)
+- **Geliştirme Ortamı**: Flutter & Dart
+- **State Yönetimi**: Riverpod (Generator destekli)
+- **Veritabanı**: Hive & Hive Flutter (Çok hızlı, yerel NoSQL çözüm)
+- **OCR (Görsel Tanıma)**: Google ML Kit (Text Recognition)
+- **Bildirim Altyapısı**: Flutter Local Notifications (Arka plan tam-zamanlı alarm destekli)
+- **Arayüz Tasarımı**: Custom Glassmorphism UI, Google Fonts (Poppins), Dinamik Temalandırma
 
 ## 📥 Kurulum (Geliştiriciler İçin)
 
-1.  **Repoyu Klonlayın**:
+1. **Repoyu Klonlayın**:
     ```bash
-    git clone https://github.com/KULLANICI_ADINIZ/Ctrl-App.git
-    cd Ctrl-App/vip_finance
+    git clone https://github.com/Tparlak/Ctrl-Finance-App.git
+    cd Ctrl-Finance-App/vip_finance
     ```
 
-2.  **Bağımlılıkları Yükleyin**:
+2. **Bağımlılıkları Yükleyin**:
     ```bash
     flutter pub get
     ```
 
-3.  **Hive Adapter'ları Üretin**:
+3. **Riverpod ve Hive Adapter'ları Üretin** (Zaten repodaysa bu adımı atlayabilirsiniz):
     ```bash
     flutter pub run build_runner build --delete-conflicting-outputs
     ```
 
-4.  **Uygulamayı Çalıştırın**:
+4. **Uygulamayı Çalıştırın**:
     ```bash
     flutter run
     ```
 
-## 📦 APK Oluşturma (Release)
+## 📦 Çıktı Alma (Release Build)
 
-Samsung S22 gibi cihazlarda sorunsuz kurulum için imzalı release APK oluşturmak gerekir:
+Minimum APK boyutunu sağlayan ve yeni Android telefonlarda (Samsung S22/S24 serisi, vs.) en yüksek performansta çalışacak şekilde optimize edilmiş build komutu:
 
 ```bash
 flutter build apk --release --no-tree-shake-icons
 ```
-*Not: APK dosyası `build/app/outputs/flutter-apk/Ctrl-v1.0.apk` yolunda oluşturulacaktır.*
+*Not: RAM limitine takılıyorsanız başına ortam değişkeni ekleyebilirsiniz:*
+`$env:JAVA_OPTS="-Xmx1536m"; flutter build apk --release --no-tree-shake-icons`
 
 ---
-*Bu proje "Ctrl" ismiyle finansal özgürlüğünüzü kontrol altına almanız için geliştirilmiştir.*
+<div align="center">
+  <b>Finansal Özgürlüğünüzü "Ctrl" Altına Alın.</b>
+</div>
