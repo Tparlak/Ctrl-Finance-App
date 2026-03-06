@@ -4,7 +4,10 @@ import '../data/services/logo_fetcher.dart';
 
 class LogoSettingsState {
   final String logoApiKey;
-  const LogoSettingsState({this.logoApiKey = ''});
+  // Built-in key — works out of the box, no user input needed
+  static const String _builtInKey = 'pk_Vg10ihZDT0qocIwBk-FY8A';
+
+  const LogoSettingsState({this.logoApiKey = _builtInKey});
   bool get logoEnabled => logoApiKey.trim().isNotEmpty;
 
   LogoSettingsState copyWith({String? logoApiKey}) =>
@@ -18,8 +21,13 @@ class LogoSettingsNotifier extends StateNotifier<LogoSettingsState> {
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedKey = prefs.getString(_logoKeyPref) ?? '';
-    state = state.copyWith(logoApiKey: savedKey);
+    // Use saved key if exists, otherwise fall back to built-in key
+    final savedKey = prefs.getString(_logoKeyPref);
+    state = state.copyWith(
+      logoApiKey: (savedKey != null && savedKey.isNotEmpty)
+          ? savedKey
+          : LogoSettingsState._builtInKey,
+    );
   }
 
   Future<void> setLogoApiKey(String key) async {
