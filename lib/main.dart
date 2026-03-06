@@ -24,6 +24,7 @@ import 'screens/onboarding_screen.dart';
 import 'providers/theme_provider.dart';
 import 'providers/fixed_expense_provider.dart';
 import 'providers/navigation_provider.dart';
+import 'providers/logo_settings_provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/services/notification_service.dart';
@@ -59,6 +60,11 @@ Future<void> main() async {
       await HomeWidgetService.syncWidgetData();
     }
     // NOTE: Permissions are requested AFTER onboarding completes (see OnboardingScreen._finish)
+
+    // Init logo settings (loads saved API key from SharedPreferences)
+    final logoContainer = ProviderContainer();
+    await logoContainer.read(logoSettingsProvider.notifier).init();
+    logoContainer.dispose();
   } catch (e) {
     runApp(
       MaterialApp(

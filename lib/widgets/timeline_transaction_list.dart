@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../models/transaction_model.dart';
 import '../theme/app_colors.dart';
 import '../presentation/widgets/receipt_image_viewer.dart';
+import '../presentation/widgets/logo_widget.dart';
 import '../widgets/bounce_tap.dart';
 
 
@@ -172,6 +173,23 @@ class _TimelineItem extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
+                      // ── Brand logo or category icon ───────────────────────
+                      Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: LogoWidget(
+                          description: transaction.description.isNotEmpty
+                              ? transaction.description
+                              : catName,
+                          fallbackIcon: isTransfer
+                              ? Icons.swap_horiz_rounded
+                              : isExpense
+                                  ? Icons.arrow_upward_rounded
+                                  : Icons.arrow_downward_rounded,
+                          fallbackColor: nodeColor,
+                          size: 36,
+                          iconSize: 18,
+                        ),
+                      ),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

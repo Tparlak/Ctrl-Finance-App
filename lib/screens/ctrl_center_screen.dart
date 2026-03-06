@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../data/hive_boxes.dart';
 import '../theme/app_colors.dart';
 import '../widgets/glass_card.dart';
@@ -16,6 +17,8 @@ import '../providers/account_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../providers/category_provider.dart';
 import '../providers/fixed_expense_provider.dart';
+import '../providers/logo_settings_provider.dart';
+import '../data/services/logo_fetcher.dart';
 import 'category_manager_screen.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/bounce_tap.dart';
@@ -245,6 +248,11 @@ class _CtrlCenterScreenState extends ConsumerState<CtrlCenterScreen> {
                       ),
                     ],
                   ),
+                ),
+                // ── Logo Engine Section ───────────────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: _LogoEngineSection(),
                 ),
                 // ── Footer ───────────────────────────────────────────────────────────
                 Padding(
@@ -643,3 +651,144 @@ class VersionFooter extends StatelessWidget {
     );
   }
 }
+
+// ── Logo Engine Settings Section ──────────────────────────────────────────────
+
+class _LogoEngineSection extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_LogoEngineSection> createState() => _LogoEngineSectionState();
+}
+
+class _LogoEngineSectionState extends ConsumerState<_LogoEngineSection> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final currentKey = ref.read(logoSettingsProvider).logoApiKey;
+    _controller = TextEditingController(text: currentKey);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(logoSettingsProvider);
+    final isEnabled = settings.logoEnabled;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '🏷️ LOGO MOTORU',
+          style: GoogleFonts.poppins(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 10),
+        GlassCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 8, height: 8,
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: isEnabled ? AppColors.green : Colors.grey,
+                      shape: BoxShape.circle,
+                      boxShadow: isEnabled
+                          ? [BoxShadow(color: AppColors.green.withOpacity(0.5), blurRadius: 6)]
+                          : [],
+                    ),
+                  ),
+                  Text(
+                    isEnabled
+                        ? 'Aktif — İşlem logoları çekiliyor'
+                        : 'Pasif — API key girilmedi',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: isEnabled ? AppColors.green : Colors.grey,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _controller,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'logo.dev Publishable Key',
+                  labelStyle: GoogleFonts.poppins(fontSize: 12),
+                  hintText: 'pk_...',
+                  helperText: 'logo.dev → ücretsiz kayıt → Dashboard → API Keys',
+                  helperStyle: GoogleFonts.poppins(fontSize: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  isDense: true,
+                  suffixIcon: _controller.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 16),
+                          onPressed: () {
+                            _controller.clear();
+                            ref.read(logoSettingsProvider.notifier).setLogoApiKey('');
+                            setState(() {});
+                          },
+                        )
+                      : null,
+                ),
+                onChanged: (v) {
+                  ref.read(logoSettingsProvider.notifier).setLogoApiKey(v);
+                  setState(() {});
+                },
+              ),
+              if (isEnabled) ...[
+                const SizedBox(height: 10),
+                TextButton.icon(
+                  icon: const Icon(Icons.preview_rounded, size: 16),
+                  label: Text('Önizle — Migros', style: GoogleFonts.poppins(fontSize: 12)),
+                  onPressed: () {
+                    final url = LogoFetcher.getLogoUrl(
+                      description: 'migros',
+                      apiKey: settings.logoApiKey,
+                    );
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        title: Text('Logo Testi', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface)),
+                        content: url != null
+                            ? CachedNetworkImage(
+                                imageUrl: url,
+                                width: 80, height: 80,
+                                errorWidget: (_, __, ___) => const Text('Logo yüklenemedi'),
+                              )
+                            : const Text('URL oluşturulamadı.'),
+                        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Kapat'))],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
