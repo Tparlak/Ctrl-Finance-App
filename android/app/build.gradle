@@ -64,6 +64,7 @@ android {
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
+        resValue "string", "app_name", "Ctrl v${flutterVersionName}"
     }
 
     buildTypes {

@@ -19,6 +19,7 @@ import '../providers/category_provider.dart';
 import '../providers/fixed_expense_provider.dart';
 import '../providers/logo_settings_provider.dart';
 import '../data/services/logo_fetcher.dart';
+import '../data/services/ocr_service.dart';
 import 'category_manager_screen.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/bounce_tap.dart';
@@ -633,21 +634,93 @@ class VersionFooter extends StatelessWidget {
     return FutureBuilder<PackageInfo>(
       future: PackageInfo.fromPlatform(),
       builder: (ctx, snap) {
-        final version = snap.data?.version ?? '5.0.0';
-        final build = snap.data?.buildNumber ?? '50';
+        final version = snap.data?.version ?? '7.1.1';
+        final build = snap.data?.buildNumber ?? '72';
         return Padding(
           padding: const EdgeInsets.only(bottom: 16, top: 8),
           child: Center(
-            child: Text(
-              'Ctrl Finance v$version ($build)',
-              style: GoogleFonts.poppins(
-                color: Colors.grey.shade600,
-                fontSize: 11,
+            child: GestureDetector(
+              onLongPress: () => _showOcrDebugDialog(context),
+              child: Text(
+                'Ctrl Finance v$version ($build)',
+                style: GoogleFonts.poppins(
+                  color: Colors.grey.shade600,
+                  fontSize: 11,
+                ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  void _showOcrDebugDialog(BuildContext context) {
+    final rawText = OcrService.lastRawText ?? 'Henüz fiş taranmadı.';
+    final normalizedText = OcrService.lastNormalizedText ?? 'Henüz fiş taranmadı.';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => DefaultTabController(
+        length: 2,
+        child: AlertDialog(
+          backgroundColor: Theme.of(ctx).colorScheme.surface,
+          title: Text(
+            '🔍 OCR Debug Modu',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 400,
+            child: Column(
+              children: [
+                const TabBar(
+                  tabs: [
+                    Tab(text: 'Ham ML Kit'),
+                    Tab(text: 'Normalleştirilmiş'),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _buildDebugText(rawText, ctx),
+                      _buildDebugText(normalizedText, ctx),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Kapat'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDebugText(String text, BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark 
+            ? Colors.black26 
+            : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: SingleChildScrollView(
+        child: SelectableText(
+          text,
+          style: const TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 11,
+          ),
+        ),
+      ),
     );
   }
 }

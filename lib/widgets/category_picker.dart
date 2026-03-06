@@ -72,7 +72,13 @@ class _CategoryPickerState extends ConsumerState<CategoryPicker> {
             IconData(parent.iconCodePoint, fontFamily: 'MaterialIcons'),
             color: _parseColor(parent.color),
           ),
-          title: Text(parent.name, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface)),
+          title: GestureDetector(
+            onTap: () {
+              Navigator.pop(context); // close sheet
+              widget.onSelected(parent);
+            },
+            child: Text(parent.name, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface)),
+          ),
           children: children.map((child) {
             return ListTile(
               contentPadding: const EdgeInsets.only(left: 56.0),

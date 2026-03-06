@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import '../data/services/ocr_service.dart';
 import '../widgets/category_picker.dart';
 import '../data/models/receipt_item.dart';
+import '../presentation/widgets/ocr_review_sheet.dart';
 import '../widgets/bounce_tap.dart';
 
 void showAddTransactionSheet(BuildContext context, {int initialTab = 1}) {
@@ -98,6 +99,15 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                 decoration: BoxDecoration(color: Colors.grey.shade600, borderRadius: BorderRadius.circular(2))),
             Text('Fiş Ekle', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
             const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                '💡 İpucu: Fişi düz bir zemine koyun ve yazıları net çıkacak şekilde çekin.',
+                style: GoogleFonts.poppins(fontSize: 12, color: Colors.orange.shade300, fontStyle: FontStyle.italic),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 8),
             ListTile(
               leading: const Text('📸', style: TextStyle(fontSize: 24)),
               title: Text('Kameradan Çek', style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface)),
@@ -115,131 +125,76 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
     );
 
     if (source == null) return;
-    final photo = await ImagePicker().pickImage(source: source, imageQuality: 85);
+    final photo = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 85,
+      maxWidth: 1600,
+      maxHeight: 1600,
+    );
     if (photo == null) return;
 
     setState(() => _isScanning = true);
     try {
-      final result = await OcrService.scanImage(photo.path);
+      final parsed = await OcrService.scanReceipt(photo.path);
+
+      // Store the raw text for debug view before we do any early returns
+      // (Handled internally by OcrService._lastRawText)
 
       // ── Auto-select category ───────────────────────────────────────────────
       String? autoCategoryId;
-      if (result.categoryHint != null) {
-        final categories = _tab == 0
-            ? ref.read(incomeCategoryProvider)
-            : ref.read(expenseCategoryProvider);
-        final hint = result.categoryHint!.toUpperCase();
-        final match = categories.where((c) {
-          final name = c.name.toUpperCase();
-          return name.contains(hint) ||
-              (hint == 'YAKIT' && name.contains('YAKIT')) ||
-              (hint == 'MARKET' && name.contains('MARKET'));
-        }).firstOrNull;
+      final categories = _tab == 0
+          ? ref.read(incomeCategoryProvider)
+          : ref.read(expenseCategoryProvider);
+          
+      if (parsed.isFuel) {
+        final match = categories.where((c) => c.name.toUpperCase().contains('YAKIT')).firstOrNull;
+        if (match != null) autoCategoryId = match.id;
+      } else if (parsed.isMarket) {
+        final match = categories.where((c) => c.name.toUpperCase().contains('MARKET')).firstOrNull;
         if (match != null) autoCategoryId = match.id;
       }
 
       // ── Auto-select account ────────────────────────────────────────────────
       String? autoAccountId;
-      if (result.accountHint != null && result.accountHint!.isNotEmpty) {
+      if (parsed.accountHint != null) {
         final accounts = ref.read(accountProvider);
         final match = accounts.where((a) =>
-          a.name.toUpperCase().contains(result.accountHint!.toUpperCase())).firstOrNull;
+          a.name.toUpperCase().contains(parsed.accountHint!.toUpperCase())).firstOrNull;
         if (match != null) autoAccountId = match.id;
       }
 
-      // ── If market with multiple items → offer multi-item dialog ────────────
-      if (result.categoryHint == 'Market' && result.items.length > 1) {
-        setState(() => _isScanning = false);
-        if (!mounted) return;
-        final addAll = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: Theme.of(ctx).cardColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text('${result.items.length} Ürün Bulundu',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-            content: SizedBox(
-              width: double.maxFinite,
-              height: 260,
-              child: Column(
-                children: [
-                  Text('Her ürünü ayrı işlem olarak eklemek ister misiniz?',
-                      style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textSecondary)),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: result.items.length,
-                      itemBuilder: (_, i) {
-                        final item = result.items[i];
-                        return ListTile(
-                          dense: true,
-                          leading: const Icon(Icons.shopping_basket_outlined, color: AppColors.gold, size: 18),
-                          title: Text(item.name, style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textPrimary)),
-                          trailing: Text('${item.price.toStringAsFixed(2)} ₺',
-                              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.green)),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text('Tek İşlem', style: GoogleFonts.poppins(color: AppColors.textSecondary)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.gold, foregroundColor: Colors.black),
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text('Hepsini Ekle', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-              ),
-            ],
-          ),
-        );
+      if (mounted) setState(() => _isScanning = false);
 
-        if (addAll == true && mounted) {
-          await _addMultipleItemsAsTransactions(
-            items: result.items,
-            date: result.date ?? _selectedDate,
-            time: result.time ?? _selectedTime,
-            accountId: autoAccountId ?? _fromAccountId,
-            categoryId: autoCategoryId ?? _selectedCategoryId,
-            receiptImagePath: photo.path,
-          );
-          if (mounted) Navigator.of(context).pop();
-          return;
-        }
-      }
+      // ── Show Review Sheet before populating ──────────────────────────────
+      if (!mounted) return;
+      final corrected = await OcrReviewSheet.show(context, parsed);
+      
+      // User cancelled the review sheet
+      if (corrected == null) return;
 
-      // ── Single transaction fill ────────────────────────────────────────────
+      // ── Single transaction fill (using corrected data) ─────────────────────
       setState(() {
         _receiptImagePath = photo.path;
-        _receiptItems = result.items;
-        if (result.amount != null) {
-          _amountController.text = result.amount!.toStringAsFixed(2).replaceAll('.', ',');
+        _receiptItems = corrected.items;
+        
+        if (corrected.total != null) {
+          _amountController.text = corrected.total!.toStringAsFixed(2).replaceAll('.', ',');
         }
-        // Description: fuel → litre+price already in merchantName
-        // Market → Merchant Name + Item List (name | price)
-        if (_descController.text.isEmpty) {
-          if (result.categoryHint == 'Market') {
-            String desc = '';
-            if (result.merchantName != null && result.merchantName!.isNotEmpty) {
-              desc += '${result.merchantName}\n';
-            }
-            if (result.items.isNotEmpty) {
-              desc += result.items.map((i) => '${i.name} | ${i.price.toStringAsFixed(2)} ₺').join('\n');
-            }
-            _descController.text = desc.trim();
-          } else if (result.merchantName != null) {
-            _descController.text = result.merchantName!;
-          }
+        
+        if (_descController.text.isEmpty && corrected.merchantName != null) {
+           _descController.text = corrected.merchantName!;
         }
-        if (result.date != null) _selectedDate = result.date!;
-        if (result.time != null) _selectedTime = result.time!;
+        
+        if (corrected.date != null) _selectedDate = corrected.date!;
+        
+        if (corrected.time != null) {
+          _selectedTime = TimeOfDay(hour: corrected.time!.hour, minute: corrected.time!.minute);
+        }
+        
         if (autoCategoryId != null) _selectedCategoryId = autoCategoryId;
         if (autoAccountId != null) _fromAccountId = autoAccountId;
       });
+
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -477,8 +432,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
             Expanded(
               child: TextField(
                 controller: _amountController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 style: GoogleFonts.poppins(
                   color: _actionColor,
                   fontSize: 28,
@@ -486,7 +440,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
                 ),
                 textAlign: TextAlign.center,
                 decoration: InputDecoration(
-                  labelText: 'TUTAR',
+                  labelText: 'TUTAR (₺)',
                   labelStyle: GoogleFonts.poppins(
                       color: AppColors.textSecondary, fontSize: 13),
                   border: OutlineInputBorder(
@@ -525,25 +479,53 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet>
               ),
             ],
           ),
-          if (_receiptItems.isNotEmpty)
+          if (_receiptItems.isNotEmpty || _receiptImagePath != null)
             Theme(
               data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
+                initiallyExpanded: true,
                 tilePadding: const EdgeInsets.symmetric(horizontal: 16),
                 iconColor: AppColors.gold,
                 collapsedIconColor: AppColors.gold,
-                title: Text(
-                  'Ürün Listesi (${_receiptItems.length})',
-                  style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w600),
+                title: Row(
+                  children: [
+                    Text(
+                      _receiptItems.length == 1 && _descController.text.contains(RegExp(r'Motorin|Benzin|Otogaz|LPG|Yakıt', caseSensitive: false))
+                        ? '⛽ Akaryakıt Detayı'
+                        : '🧾 Fiş İçeriği (${_receiptItems.length})',
+                      style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                    const Spacer(),
+                    if (_receiptImagePath != null)
+                      TextButton.icon(
+                        icon: const Icon(Icons.document_scanner_outlined, size: 14, color: AppColors.gold),
+                        label: const Text('Yeniden Tara', style: TextStyle(fontSize: 11, color: AppColors.gold)),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: _isScanning ? null : _showScanOptions,
+                      ),
+                  ],
                 ),
-                children: _receiptItems.map((item) => ListTile(
-                  dense: true,
-                  title: Text(item.name, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 12)),
-                  trailing: Text(
-                    '${item.price.toStringAsFixed(2)} ₺',
-                    style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                )).toList(),
+                children: [
+                   if (_receiptItems.isNotEmpty)
+                     ..._receiptItems.map((item) => ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                        title: Text(item.name, style: GoogleFonts.poppins(color: Theme.of(context).colorScheme.onSurface, fontSize: 12)),
+                        trailing: Text(
+                          '${item.price.toStringAsFixed(2)} ₺',
+                          style: GoogleFonts.poppins(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      )).toList(),
+                   if (_receiptItems.isEmpty && _receiptImagePath != null)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                        child: Text('Taranan fişte ürün bulunamadı.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                     ),
+                ],
               ),
             ),
       ],

@@ -14,13 +14,34 @@ const _uuid = Uuid();
 // Map emoji to icon codepoint via a simple list widget
 const _defaultIconCode = 0xe59c; // shopping cart
 
-class CategoryManagerScreen extends ConsumerWidget {
+class CategoryManagerScreen extends ConsumerStatefulWidget {
   const CategoryManagerScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CategoryManagerScreen> createState() => _CategoryManagerScreenState();
+}
+
+class _CategoryManagerScreenState extends ConsumerState<CategoryManagerScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final allCats = ref.watch(categoryProvider);
-    final topLevel = allCats.where((c) => c.parentCategory == null).toList();
+    final isIncome = _tabController.index == 0;
+    final topLevel = allCats.where((c) => c.parentCategory == null && c.type == (isIncome ? 'income' : 'expense')).toList();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -28,7 +49,7 @@ class CategoryManagerScreen extends ConsumerWidget {
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 16),
+              padding: const EdgeInsets.fromLTRB(20, 60, 20, 8),
               child: Text(
                 'KATEGORİ YÖNETİMİ',
                 style: GoogleFonts.poppins(
@@ -40,14 +61,40 @@ class CategoryManagerScreen extends ConsumerWidget {
               ),
             ),
           ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).inputDecorationTheme.fillColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.transparent),
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  indicator: BoxDecoration(
+                    color: AppColors.gold.withOpacity( 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  labelColor: AppColors.gold,
+                  unselectedLabelColor: AppColors.textSecondary,
+                  labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  tabs: const [
+                    Tab(text: 'GELİR'),
+                    Tab(text: 'GİDER'),
+                  ],
+                ),
+              ),
+            ),
+          ),
           _SectionHeader(label: '📂 TÜM KATEGORİLER'),
-          _HierarchicalCategoryList(topLevel: topLevel, type: 'expense'),
+          _HierarchicalCategoryList(topLevel: topLevel, type: isIncome ? 'income' : 'expense'),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: _AddButton(
                 label: '+ Yeni Kategori Grubu',
-                type: 'expense',
+                type: isIncome ? 'income' : 'expense',
               ),
             ),
           ),
